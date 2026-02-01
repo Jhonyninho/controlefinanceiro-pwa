@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Controle Financeiro Pessoal</title>
+
+  <!-- PWA -->
+  <meta name="theme-color" content="#1e293b" />
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Estilo -->
+  <link rel="stylesheet" href="style.css" />
+
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+
+  <!-- =====================================================
+       TELA DE LOGIN (NOVO)
+  ====================================================== -->
+  <div id="login-screen" class="login-container">
+
+    <div class="login-box">
+      <h1>💰 Controle Financeiro</h1>
+      <p class="subtitle">Acesso ao sistema</p>
+
+      <form id="loginForm">
+        <label>Usuário</label>
+        <input type="text" id="login" required />
+
+        <label>Senha</label>
+        <input type="password" id="senha" required />
+
+        <button type="submit" class="btn-primario">Entrar</button>
+
+        <p id="loginError" class="login-error hidden"></p>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- =====================================================
+       APLICAÇÃO (ORIGINAL – AGORA ENVOLVIDA)
+  ====================================================== -->
+  <div id="app" class="hidden">
+  <!-- =====================================================
+    HEADER + APP BAR (MOBILE FIRST)
+    ===================================================== -->
+    <header class="app-header">
+
+      <div class="app-bar">
+
+        <!-- Botão menu (mobile) -->
+        <button id="btnMenu" class="btn-menu" aria-label="Abrir menu">
+          ☰
+        </button>
+
+        <!-- Título -->
+        <div class="app-title">
+          <h1>💰 Controle Financeiro</h1>
+          <span id="periodoAtual"></span>
+        </div>
+
+      </div>
+
+    </header>
+
+    <!-- =====================================================
+    MENU LATERAL (DRAWER MOBILE)
+    ===================================================== -->
+    <div id="menuOverlay" class="menu-overlay hidden"></div>
+
+    <aside id="sideMenu" class="side-menu">
+
+      <nav class="side-menu-nav">
+
+        <button class="side-link active" data-tab="resumo">
+          ⏱ <span>Resumo</span>
+        </button>
+
+        <button class="side-link" data-tab="nova-despesa">
+          ➕ <span>Nova Despesa</span>
+        </button>
+
+
+        <button class="side-link" data-tab="lancamentos">
+          💳 <span>Lançamentos</span>
+        </button>
+
+        <button class="side-link" data-tab="futuros">
+          🧾 <span>Lançamentos Futuros</span>
+        </button>
+
+        <button class="side-link" data-tab="contas">
+          💳 <span>Contas</span>
+        </button>
+
+        <button class="side-link" data-tab="resumo-geral">
+          📊 <span>Resumo Geral</span>
+        </button>
+
+      </nav>
+
+      <div class="logout-container">
+        <button id="btnLogout" class="btn-logout">
+          <span class="icon">⏻</span>
+          <span>Sair</span>
+        </button>
+      </div>
+
+    </aside>
+    
+    <!-- =====================================================
+         ABA: RESUMO
+    ====================================================== -->
+    <main id="tab-resumo" class="tab-content active">
+
+      <section class="resumo-pagamentos">
+
+        <div class="coluna">
+          <h3>Débito</h3>
+          <div id="cards-debito" class="cards-coluna"></div>
+        </div>
+
+        <div class="coluna">
+          <h3>Crédito</h3>
+          <div id="cards-credito" class="cards-coluna"></div>
+        </div>
+
+        <div class="coluna">
+          <h3>Pix / TED (Entradas)</h3>
+          <div id="cards-pix-entrada" class="cards-coluna"></div>
+        </div>
+
+        <div class="coluna">
+          <h3>Pix / TED (Saídas)</h3>
+          <div id="cards-pix-saida" class="cards-coluna"></div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- =====================================================
+     ABA: CONTAS
+    ====================================================== -->
+    <main id="tab-contas" class="tab-content">
+
+      <section class="tabela-box">
+        <h2>🏦 Manutenção de Contas</h2>
+
+        <div class="tabela-wrapper">
+          <table id="tabelaContas" class="tabela-analitica">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Ativo</th>
+                <th>Bandeira</th>
+                <th>Skin</th>
+                <th>Resumo</th>
+                <th>Ordem</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- =====================================================
+         ABA: RESUMO GERAL
+    ====================================================== -->
+    <main id="tab-resumo-geral" class="tab-content">
+      <section class="resumo-geral">
+        <div id="cards-resumo-geral" class="cards-resumo-geral"></div>
+      </section>
+    </main>
+
+    <!-- =====================================================
+         ABA: LANÇAMENTOS
+    ====================================================== -->
+    <main id="tab-lancamentos" class="tab-content">
+
+      <section class="tabela-box">
+        <h2>📊 Gastos por Categoria × Mês</h2>
+
+        <div class="tabela-wrapper">
+          <table id="tabelaCategoriaMes" class="tabela-analitica">
+            <thead>
+              <tr>
+                <th>Categoria</th>
+                <th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th>
+                <th>Mai</th><th>Jun</th><th>Jul</th><th>Ago</th>
+                <th>Set</th><th>Out</th><th>Nov</th><th>Dez</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <th>Total</th>
+                <th colspan="12"></th>
+                <th></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <section class="tabela-box">
+        <h2>💳 Gastos por Categoria × Tipo de Pagamento</h2>
+
+        <div class="tabela-wrapper">
+          <table id="tabelaCategoriaTipo" class="tabela-analitica">
+            <thead>
+              <tr>
+                <th>Categoria</th>
+                <th>Débito</th>
+                <th>Crédito</th>
+                <th>Pix / TED</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <th>Total</th>
+                <th></th><th></th><th></th><th></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <!-- ✅ NOVA TABELA: ENTRADAS -->
+      <section class="tabela-box">
+        <h2>💰 Entradas × Tipo de Recebimento</h2>
+
+        <div class="tabela-wrapper">
+          <table id="tabelaEntradasTipo" class="tabela-analitica">
+            <thead>
+              <tr>
+                <th>Categoria</th>
+                <th>Pix</th>
+                <th>TED</th>
+                <th>Dinheiro</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- =====================================================
+     ABA: LANÇAMENTOS FUTUROS
+    ====================================================== -->
+    <main id="tab-futuros" class="tab-content">
+
+      <section class="tabela-box">
+
+        <h2>⏳ Lançamentos Futuros</h2>
+
+        <!-- FILTROS + AÇÕES -->
+        <div class="filtros-futuros-wrapper">
+
+          <!-- FILTROS -->
+          <div class="filtros-futuros">
+
+            <div>
+              <label>Mês</label>
+              <select id="filtroMesFuturo">
+                <option value="">Todos</option>
+                <option value="0">Jan</option>
+                <option value="1">Fev</option>
+                <option value="2">Mar</option>
+                <option value="3">Abr</option>
+                <option value="4">Mai</option>
+                <option value="5">Jun</option>
+                <option value="6">Jul</option>
+                <option value="7">Ago</option>
+                <option value="8">Set</option>
+                <option value="9">Out</option>
+                <option value="10">Nov</option>
+                <option value="11">Dez</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Ano</label>
+              <select id="filtroAnoFuturo"></select>
+            </div>
+
+            <div>
+              <label>Conta</label>
+              <select id="filtroContaFuturo">
+                <option value="">Todas</option>
+              </select>
+            </div>
+
+            <button id="btnLimparFiltrosFuturo">Limpar</button>
+          </div>
+
+          <!-- AÇÃO EM LOTE -->
+          <div class="acoes-futuros">
+            <button
+              id="btnPagarTudo"
+              class="btn-primario btn-consolidar"
+              disabled
+              title="Use os filtros para habilitar"
+              
+            >
+              💳 Consolidar Despesas
+            </button>
+          </div>
+
+        </div>
+
+        <!-- TABELA -->
+        <div class="tabela-wrapper">
+          <table id="tabelaLancamentosFuturos" class="tabela-analitica">
+            <thead>
+              <tr>
+                <th>Vencimento</th>
+                <th>Categoria</th>
+                <th>Conta</th>
+                <th>Valor</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+      </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         ABA: NOVA DESPESA
+    ====================================================== -->
+    <main id="tab-nova-despesa" class="tab-content">
+
+      <section class="form-box">
+        <h2>Registrar Lançamento</h2>
+
+        <form id="formLancamento">
+
+          <label>Tipo</label>
+          <select id="tipo" required>
+            <option value="SAIDA">Despesa</option>
+            <option value="ENTRADA">Entrada</option>
+          </select>
+
+          <label>Categoria</label>
+          <select id="categoria" required></select>
+
+          <label>Subcategoria</label>
+          <select id="subcategoria" required></select>
+
+          <label>Conta (Banco)</label>
+          <select id="conta" required></select>
+
+          <label>Forma de Pagamento/Recebimento</label>
+          <select id="pagamento" required></select>
+
+          <label>Valor</label>
+          <input type="number" id="valor" step="0.01" required />
+
+          <label>Data</label>
+          <input type="date" id="data" required />
+
+          <label class="check">
+            <input type="checkbox" id="fixo" />
+            Gasto fixo mensal
+          </label>
+
+          <label class="check">
+            <input type="checkbox" id="parcelado" />
+            Compra parcelada
+          </label>
+
+          <div id="campoParcelamento" class="hidden">
+
+            <label>Nº de parcelas</label>
+            <input
+              type="number"
+              id="qtdParcelas"
+              min="2"
+              max="48"
+              placeholder="Ex: 4"
+            />
+
+            <label>Valor de cada parcela</label>
+            <input
+              type="number"
+              id="valorParcela"
+              step="0.01"
+              placeholder="Ex: 250,00"
+            />
+
+          </div>
+
+
+          <label>Descrição</label>
+          <input type="text" id="descricao" />
+
+          <div class="campo-checkbox">
+            <label>
+              <input type="checkbox" id="chk-futuro">
+              Lançamento futuro
+            </label>
+          </div>
+
+          <button type="submit" class="btn-primario">Salvar</button>
+
+        </form>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- JS -->
+  <script src="app.js"></script>
+
+  <!-- REGISTRO DO SERVICE WORKER -->
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register(
+        '/controlefinanceiro-pwa/service-worker.js',
+        { scope: '/controlefinanceiro-pwa/' }
+      );
+    });
+  }
+  </script>
+
+</body>
+</html>
