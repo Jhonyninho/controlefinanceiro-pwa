@@ -432,13 +432,13 @@
   <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/ControleFinanceiro/service-worker.js', {
-        scope: '/ControleFinanceiro/'
-      });
+      navigator.serviceWorker.register(
+        '/controlefinanceiro-pwa/service-worker.js',
+        { scope: '/controlefinanceiro-pwa/' }
+      );
     });
   }
   </script>
-
 
 </body>
 </html>
