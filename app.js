@@ -28,7 +28,6 @@ let filtrosFuturos = {
   conta: ''
 };
 
-
 // ======================================================
 // HELPERS GERAIS
 // ======================================================
@@ -60,7 +59,6 @@ function parseValorBR(v) {
   ) || 0;
 }
 
-
 function mesIndex(data) {
   const d = new Date(data);
   return new Date(
@@ -75,7 +73,6 @@ function formatarDataBR(dataISO) {
   const d = new Date(dataISO);
   return d.toLocaleDateString('pt-BR');
 }
-
 
 // ======================================================
 // INIT GERAL + LOGIN
@@ -199,7 +196,6 @@ function inicializarFiltrosLancamentosFuturos() {
   };
 }
 
-
 // ---------------- SESSÃO ----------------
 function verificarSessao() {
   const user = getUsuarioLogado();
@@ -236,7 +232,6 @@ function atualizarPeriodoAtual() {
   });
 }
 
-
 // ======================================================
 // CATEGORIAS
 // ======================================================
@@ -249,20 +244,22 @@ async function carregarCategorias() {
 // CONTAS
 // ======================================================
 async function carregarContas() {
-  const res = await post('getContas');
+  const user = getUsuarioLogado();
+  if (!user) return;
+
+  const res = await post('getContas', {
+    usuario: user.login
+  });
+
   contas = res.contas || [];
 
-  // ===============================
-  // SELECT – NOVO LANÇAMENTO
-  // (somente contas ATIVAS)
-  // ===============================
   const selectConta = document.getElementById('conta');
   if (!selectConta) return;
 
   selectConta.innerHTML = '<option value="">Selecione</option>';
 
   contas
-    .filter(c => c.ativo === 'SIM')   // 👈 SOMENTE ATIVAS
+    .filter(c => c.ativo === 'SIM')
     .forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.nome;
@@ -270,7 +267,6 @@ async function carregarContas() {
       selectConta.appendChild(opt);
     });
 }
-
 
 // ======================================================
 // CONTAS – TABELA (ABA CONTAS)
@@ -320,7 +316,6 @@ function renderTabelaContas() {
     tbody.appendChild(tr);
   });
 }
-
 
 // ======================================================
 // PAGAMENTOS
@@ -399,7 +394,6 @@ function criarCard(conta, descricao, valor, extraClasse = '') {
   return div;
 }
 
-
 // ======================================================
 // LIMPA COLUNAS DE CARDS (OBRIGATÓRIO)
 // ======================================================
@@ -414,7 +408,6 @@ function limparColunas() {
     if (el) el.innerHTML = '';
   });
 }
-
 
 // ======================================================
 // RESUMO ATUAL (POR CONTA × PAGAMENTO) – CORRIGIDO
@@ -580,8 +573,6 @@ function renderCategoriaMes() {
     <th><strong>${formatMoney(totalGeral)}</strong></th>
   `;
 }
-
-
 
 // ---------- Categoria x Tipo (POR PAGAMENTO) ----------
 function renderCategoriaTipo() {
@@ -908,7 +899,6 @@ function configurarFormulario() {
   form.onsubmit = salvarLancamento;
 }
 
-
 function inicializarFormularioNovaDespesa() {
   const selTipo = document.getElementById('tipo');
   const selCategoria = document.getElementById('categoria');
@@ -1116,8 +1106,6 @@ let saidasFuturas = 0;
       });
   });
 
-  
-
   const saldoProjetado = saldoAtual + entradasFuturas - saidasFuturas;
 
   return {
@@ -1129,7 +1117,6 @@ let saidasFuturas = 0;
     saldoProjetado
   };
 }
-
 
 // Renderiza os cards do Resumo Geral
 function renderResumoGeral() {
@@ -1319,7 +1306,6 @@ function preencherSelectPagamentosEdicao(l) {
     `;
   });
 }
-
 
 // ======================================================
 // MODAL – LANÇAMENTOS NORMAIS (POR CATEGORIA)
@@ -1539,7 +1525,6 @@ function abrirModalEntradasCategoria(categoria) {
     });
 }
 
-
 // ======================================================
 // MODAL – EDIÇÃO DE ENTRADA
 // ======================================================
@@ -1596,11 +1581,9 @@ function abrirModalEditarConta(conta) {
 
   modal.querySelector('#btn-salvar').onclick = async () => {
     await post('updateConta', {
-      id: conta.id,
-      nome: document.getElementById('edit-nome').value, // 🔒 preservado
+      usuario: usuarioLogado,
+      conta: conta.nome,
       ativo: document.getElementById('edit-ativo').value,
-      bandeira: document.getElementById('edit-bandeira').value,
-      skin: document.getElementById('edit-skin').value,
       mostrarResumo: document.getElementById('edit-resumo').value,
       ordem: document.getElementById('edit-ordem').value
     });
@@ -1832,3 +1815,31 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+//======================================================
+function logout() {
+  // limpa sessão
+  localStorage.removeItem(SESSION_KEY);
+  usuarioLogado = null;
+
+  // limpa estado global
+  categorias = [];
+  contas = [];
+  pagamentos = [];
+  lancamentos = [];
+  lancamentosFuturos = [];
+  lancamentosFuturosFiltrados = [];
+
+  // volta para login
+  mostrarLogin();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('btnLogout');
+  if (!btn) return;
+
+  btn.onclick = () => {
+    if (confirm('Deseja realmente sair do aplicativo?')) {
+      logout();
+    }
+  };
+});
