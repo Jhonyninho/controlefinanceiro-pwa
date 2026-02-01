@@ -1595,3 +1595,55 @@ label {
   color: #c084fc;           /* roxo claro */
 }
 
+.logout-container {
+  margin-top: auto;              /* empurra para o final do menu */
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-logout {
+  width: 100%;
+  max-width: 180px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: none;
+
+  background: linear-gradient(135deg, #ff4d4d, #ff1f1f);
+  color: #fff;
+
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+}
+
+.btn-logout:hover {
+  background: linear-gradient(135deg, #ff6b6b, #ff3b3b);
+  transform: translateY(-1px);
+}
+
+.btn-logout:active {
+  transform: scale(0.97);
+}
+
+.btn-logout .icon {
+  font-size: 16px;
+}
+
+.btn-logout {
+  background: transparent;
+  border: 1px solid rgba(255, 80, 80, 0.6);
+  color: #ff5a5a;
+}
+
+.btn-logout:hover {
+  background: rgba(255, 80, 80, 0.12);
+}
