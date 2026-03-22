@@ -28,6 +28,7 @@ let filtrosFuturos = {
   conta: ''
 };
 
+
 // ======================================================
 // HELPERS GERAIS
 // ======================================================
@@ -36,10 +37,30 @@ function getUsuarioLogado() {
   return u ? JSON.parse(u) : null;
 }
 
-function post(action, payload = {}) {
-  const params = new URLSearchParams({ action, ...payload }).toString();
-  return fetch(`${API_URL}?${params}`).then(r => r.json());
+async function post(action, payload = {}) {
+  try {
+    // tenta POST primeiro
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action,
+        ...payload
+      })
+    });
+
+    return await res.json();
+
+  } catch (err) {
+    // fallback GET (segurança total)
+    const params = new URLSearchParams({ action, ...payload }).toString();
+    const res = await fetch(`${API_URL}?${params}`);
+    return await res.json();
+  }
 }
+
 
 function formatMoney(v) {
   return Number(v || 0).toLocaleString('pt-BR', {
@@ -49,14 +70,35 @@ function formatMoney(v) {
 }
 
 function parseValorBR(v) {
-  if (typeof v === 'number') return v;
+
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    return v;
+  }
+
   if (!v) return 0;
 
-  return Number(
-    String(v)
-      .replace(/\./g, '')   // remove milhar
-      .replace(',', '.')    // troca vírgula por ponto
-  ) || 0;
+  let s = String(v).trim();
+
+  // remove tudo que não for número, vírgula ou ponto
+  s = s.replace(/[^\d.,]/g, '');
+
+  // se tiver vírgula, assume pt-BR
+  if (s.includes(',')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  }
+
+  const n = Number(s);
+
+  return Number.isFinite(n) ? n : 0;
+}
+
+function formatarValorBR(v) {
+  const n = parseValorBR(v);
+
+  return n.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 }
 
 function mesIndex(data) {
@@ -143,8 +185,19 @@ async function iniciarSistema() {
   inicializarFormularioNovaDespesa();
 
   renderResumo();
-  renderTabelas();
   renderLancamentosFuturos();
+
+  // ==================================================
+  // DRE – INICIALIZAÇÃO CORRETA
+  // ==================================================
+  inicializarFiltrosDRE();
+  atualizarDRE();
+
+  ['dreAno', 'dreMeses', 'dreTipo', 'dreVisao', 'dreAnalise']
+  .forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.onchange = atualizarDRE;
+  });
 }
 
 function inicializarFiltrosLancamentosFuturos() {
@@ -341,16 +394,11 @@ async function carregarPagamentos() {
 // LANÇAMENTOS ATUAIS
 // ======================================================
 async function carregarLancamentos() {
-  const user = getUsuarioLogado();
-  if (!user) {
-    lancamentos = [];
-    return;
-  }
 
   const res = await post('getLancamentos');
 
-  lancamentos = (res.lancamentos || [])
-  .filter(l => String(l[9]).trim() === String(user.login).trim());
+  lancamentos = res.lancamentos || [];
+
 }
 
 // ======================================================
@@ -508,208 +556,6 @@ function renderResumo() {
         );
     });
 }
-// ======================================================
-// TABELAS
-// ======================================================
-function renderTabelas() {
-  renderCategoriaMes();
-  renderCategoriaTipo();
-  renderEntradasTipo();
-}
-
-// ---------- Categoria x Mês (COM DRILL-DOWN) ----------
-function renderCategoriaMes() {
-  const tbody = document.querySelector('#tabelaCategoriaMes tbody');
-  const tfootRow = document.querySelector('#tabelaCategoriaMes tfoot tr');
-  if (!tbody || !tfootRow) return;
-
-  tbody.innerHTML = '';
-
-  let totalGeral = 0;
-  const totaisMes = Array(12).fill(0); // 👈 TOTAL POR MÊS
-  const mapa = {};
-
-  // Monta mapa por categoria e mês
-  lancamentos.forEach(l => {
-    if (l[2] !== 'SAIDA') return;
-
-    const mes = mesIndex(l[1]);
-    const valor = parseValorBR(l[7]) || 0;
-
-    mapa[l[3]] ??= Array(12).fill(0);
-    mapa[l[3]][mes] += valor;
-
-    totaisMes[mes] += valor;
-  });
-
-  // Linhas por categoria
-  Object.entries(mapa).forEach(([cat, meses]) => {
-    const totalLinha = meses.reduce((a, b) => a + b, 0);
-    totalGeral += totalLinha;
-
-    const tr = document.createElement('tr');
-    tr.classList.add('linha-editavel');
-
-    tr.innerHTML = `
-      <td class="categoria-cell">${cat}</td>
-      ${meses.map(v => `
-        <td class="${v === 0 ? 'zero' : ''}">
-          ${v !== 0 ? formatMoney(v) : ''}
-        </td>
-      `).join('')}
-      <td><strong>${formatMoney(totalLinha)}</strong></td>
-    `;
-
-    tr.onclick = () => abrirModalLancamentosCategoria(cat);
-    tbody.appendChild(tr);
-  });
-
-  // -------- FOOTER (TOTAL POR MÊS + GERAL) --------
-  tfootRow.innerHTML = `
-    <th>Total</th>
-    ${totaisMes.map(v => `
-      <th>${v ? formatMoney(v) : ''}</th>
-    `).join('')}
-    <th><strong>${formatMoney(totalGeral)}</strong></th>
-  `;
-}
-
-// ---------- Categoria x Tipo (POR PAGAMENTO) ----------
-function renderCategoriaTipo() {
-  const table = document.getElementById('tabelaCategoriaTipo');
-  if (!table) return;
-
-  const tbody = table.querySelector('tbody');
-  const tfoot = table.querySelector('tfoot');
-  const tfootRow = tfoot?.querySelector('tr');
-
-  tbody.innerHTML = '';
-
-  // Totais gerais
-  let totalDeb = 0;
-  let totalCred = 0;
-  let totalPix = 0;
-
-  const mapa = {};
-
-  lancamentos.forEach(l => {
-    if (l[2] !== 'SAIDA') return;
-
-    const categoria = l[3];
-    const pagamento = l[6];
-    const valor = parseValorBR(l[7]) || 0;
-
-    mapa[categoria] ??= { deb: 0, cred: 0, pix: 0 };
-
-    if (pagamento === 'Débito') {
-      mapa[categoria].deb += valor;
-      totalDeb += valor;
-    } else if (pagamento === 'Crédito') {
-      mapa[categoria].cred += valor;
-      totalCred += valor;
-    } else if (pagamento === 'Pix' || pagamento === 'TED') {
-      mapa[categoria].pix += valor;
-      totalPix += valor;
-    }
-  });
-
-  // Linhas por categoria
-  Object.entries(mapa).forEach(([cat, v]) => {
-    const totalLinha = v.deb + v.cred + v.pix;
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${cat}</td>
-      <td>${v.deb ? formatMoney(v.deb) : ''}</td>
-      <td>${v.cred ? formatMoney(v.cred) : ''}</td>
-      <td>${v.pix ? formatMoney(v.pix) : ''}</td>
-      <td><strong>${formatMoney(totalLinha)}</strong></td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  // FOOTER – TOTAL GERAL
-  if (tfootRow) {
-    const totalGeral = totalDeb + totalCred + totalPix;
-
-    tfootRow.innerHTML = `
-      <th>Total</th>
-      <th>${totalDeb ? formatMoney(totalDeb) : ''}</th>
-      <th>${totalCred ? formatMoney(totalCred) : ''}</th>
-      <th>${totalPix ? formatMoney(totalPix) : ''}</th>
-      <th><strong>${formatMoney(totalGeral)}</strong></th>
-    `;
-  }
-}
-
-// ------------------- Entrada x Tipo de Recebimento ------------------------------ //
-function renderEntradasTipo() {
-  const tabela = document.getElementById('tabelaEntradasTipo');
-  const tbody = tabela?.querySelector('tbody');
-  if (!tbody) return;
-
-  tbody.innerHTML = '';
-  const mapa = {};
-
-  // Totais gerais
-  let totalPix = 0;
-  let totalTed = 0;
-  let totalDinheiro = 0;
-
-  lancamentos.forEach(l => {
-    if (l[2] !== 'ENTRADA') return;
-
-    const categoria = l[3];
-    const pagamento = l[6];
-    const valor = parseValorBR(l[7]) || 0;
-
-    mapa[categoria] ??= { pix: 0, ted: 0, dinheiro: 0 };
-
-    if (pagamento === 'Pix') {
-      mapa[categoria].pix += valor;
-      totalPix += valor;
-    }
-    else if (pagamento === 'TED') {
-      mapa[categoria].ted += valor;
-      totalTed += valor;
-    }
-    else if (pagamento === 'Dinheiro') {
-      mapa[categoria].dinheiro += valor;
-      totalDinheiro += valor;
-    }
-  });
-
-  // Linhas por categoria
-  Object.entries(mapa).forEach(([cat, v]) => {
-    const totalLinha = v.pix + v.ted + v.dinheiro;
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="categoria-cell">${cat}</td>
-      <td>${v.pix ? formatMoney(v.pix) : ''}</td>
-      <td>${v.ted ? formatMoney(v.ted) : ''}</td>
-      <td>${v.dinheiro ? formatMoney(v.dinheiro) : ''}</td>
-      <td><strong>${formatMoney(totalLinha)}</strong></td>
-    `;
-
-    tr.onclick = () => abrirModalEntradasCategoria(cat);
-    tbody.appendChild(tr);
-  });
-
-  // -------- TOTAL GERAL --------
-  const totalGeral = totalPix + totalTed + totalDinheiro;
-
-  const trTotal = document.createElement('tr');
-  trTotal.innerHTML = `
-    <td><strong>Total</strong></td>
-    <td><strong>${formatMoney(totalPix)}</strong></td>
-    <td><strong>${formatMoney(totalTed)}</strong></td>
-    <td><strong>${formatMoney(totalDinheiro)}</strong></td>
-    <td><strong>${formatMoney(totalGeral)}</strong></td>
-  `;
-
-  tbody.appendChild(trTotal);
-}
 
 // ======================================================
 // LANÇAMENTOS FUTUROS – RENDER (ENTRADA + SAÍDA)
@@ -780,9 +626,9 @@ function renderLancamentosFuturos(lista = lancamentosFuturos) {
         <td>${l[5]}</td>
         <td>${formatMoney(valor)}</td>
         <td>
-          <button class="btn-pagar">${acaoLabel}</button>
-          <button class="btn-editar">Editar</button>
-          <button class="btn-excluir">Excluir</button>
+          <button class="btn-pagar btn-acao btn-consolidar">${acaoLabel}</button>
+          <button class="btn-editar btn-acao">Editar</button>
+          <button class="btn-excluir btn-acao">Excluir</button>
         </td>
       `;
 
@@ -809,7 +655,6 @@ function renderLancamentosFuturos(lista = lancamentosFuturos) {
 
         // Atualiza telas
         renderResumo();
-        renderTabelas();
         lancamentosFuturosFiltrados = [];
         controlarBotaoPagarTudo();
         aplicarFiltrosLancamentosFuturos();
@@ -825,7 +670,8 @@ function renderLancamentosFuturos(lista = lancamentosFuturos) {
         }
       };
 
-      tr.querySelector('.btn-editar').onclick = () => abrirModalEdicaoFuturo(l);
+      tr.querySelector('.btn-editar').onclick = () =>
+        abrirModalEdicaoPadrao(l, 'updateLancamentoFuturo');
 
       tr.querySelector('.btn-excluir').onclick = async () => {
         if (!confirm('Deseja excluir este lançamento futuro?')) return;
@@ -934,7 +780,7 @@ function preencherSubcategorias(tipo, categoria) {
 }
 
 // ======================================================
-// FORM – SALVAR LANÇAMENTO (COM PAGAMENTO)
+// FORM – SALVAR LANÇAMENTO (VALOR 100% BLINDADO)
 // ======================================================
 async function salvarLancamento(e) {
   e.preventDefault();
@@ -946,76 +792,102 @@ async function salvarLancamento(e) {
     return;
   }
 
-  const tipo = document.getElementById('tipo').value;
-  const pagamento = document.getElementById('pagamento').value;
-  const parcelado = document.getElementById('parcelado').checked;
-  const isFuturo = document.getElementById('chk-futuro')?.checked;
+  const tipo       = document.getElementById('tipo').value;
+  const pagamento  = document.getElementById('pagamento').value;
+  const parcelado  = document.getElementById('parcelado').checked;
+  const isFuturo   = document.getElementById('chk-futuro')?.checked;
 
-  // ===============================
-  // PARCELAMENTO
-  // ===============================
-  if (parcelado && tipo === 'SAIDA' && pagamento === 'Crédito') {
-    const qtd = Number(document.getElementById('qtdParcelas').value);
-    const valorParcela = Number(
-      document.getElementById('valorParcela').value.replace(',', '.')
-    );
+  try {
+    // ==================================================
+    // PARCELAMENTO (CRÉDITO)
+    // ==================================================
+    if (parcelado && tipo === 'SAIDA' && pagamento === 'Crédito') {
 
-    if (!qtd || !valorParcela) {
-      alert('Informe o número de parcelas e o valor de cada parcela.');
-      return;
+      const qtdParcelas = Number(
+        document.getElementById('qtdParcelas').value
+      );
+
+      const valorParcelaStr = document
+        .getElementById('valorParcela')
+        .value
+        .trim();
+
+      if (!qtdParcelas || qtdParcelas < 2) {
+        alert('Informe a quantidade de parcelas.');
+        return;
+      }
+
+      if (!valorParcelaStr) {
+        alert('Informe o valor da parcela.');
+        return;
+      }
+
+      const dataBase = new Date(
+        document.getElementById('data').value
+      );
+
+      for (let i = 0; i < qtdParcelas; i++) {
+        const d = new Date(dataBase);
+        d.setMonth(d.getMonth() + i);
+
+        await post('addLancamentoFuturo', {
+          tipo: 'SAIDA',
+          categoria: document.getElementById('categoria').value,
+          subcategoria: document.getElementById('subcategoria').value,
+          conta: document.getElementById('conta').value,
+          pagamento: 'Crédito',
+          valor: valorParcelaStr, // ✅ STRING "99,99"
+          data: d.toISOString().split('T')[0],
+          descricao:
+            `${document.getElementById('descricao').value || ''} (${i + 1}/${qtdParcelas})`,
+          usuario: user.login
+        });
+      }
+
+    } else {
+      // ==================================================
+      // LANÇAMENTO NORMAL / FUTURO
+      // ==================================================
+      const valorStr = document
+        .getElementById('valor')
+        .value
+        .trim();
+
+      if (!valorStr) {
+        alert('Informe um valor.');
+        return;
+      }
+
+      await post(
+        isFuturo ? 'addLancamentoFuturo' : 'addLancamento',
+        {
+          tipo,
+          categoria: document.getElementById('categoria').value,
+          subcategoria: document.getElementById('subcategoria').value,
+          conta: document.getElementById('conta').value,
+          pagamento,
+          valor: valorStr, // ✅ STRING "99,99"
+          data: document.getElementById('data').value,
+          descricao: document.getElementById('descricao').value,
+          usuario: user.login
+        }
+      );
     }
 
-    const dataBase = new Date(document.getElementById('data').value);
+    // ==================================================
+    // PÓS-SUCESSO
+    // ==================================================
+    e.target.reset();
 
-    for (let i = 0; i < qtd; i++) {
-      const d = new Date(dataBase);
-      d.setMonth(d.getMonth() + i);
+    await carregarLancamentos();
+    await carregarLancamentosFuturos();
 
-      const payload = {
-        tipo: 'SAIDA',
-        categoria: document.getElementById('categoria').value,
-        subcategoria: document.getElementById('subcategoria').value,
-        conta: document.getElementById('conta').value,
-        pagamento: 'Crédito',
-        valor: valorParcela,
-        data: d.toISOString().split('T')[0],
-        descricao: `${document.getElementById('descricao').value || ''} (${i + 1}/${qtd})`,
-        usuario: user.login
-      };
+    renderResumo();
+    renderLancamentosFuturos();
 
-      await post('addLancamentoFuturo', payload);
-    }
-
-  } else {
-    // ===============================
-    // LANÇAMENTO NORMAL
-    // ===============================
-    const payload = {
-      tipo,
-      categoria: document.getElementById('categoria').value,
-      subcategoria: document.getElementById('subcategoria').value,
-      conta: document.getElementById('conta').value,
-      pagamento,
-      valor: document.getElementById('valor').value.replace(',', '.'),
-      data: document.getElementById('data').value,
-      descricao: document.getElementById('descricao').value,
-      usuario: user.login
-    };
-
-    await post(
-      isFuturo ? 'addLancamentoFuturo' : 'addLancamento',
-      payload
-    );
+  } catch (err) {
+    alert(err.message || 'Erro ao salvar lançamento.');
   }
-
-  e.target.reset();
-
-  await carregarLancamentos();
-  await carregarLancamentosFuturos();
-
-  renderResumo();
-  renderTabelas();
-  renderLancamentosFuturos();
 }
 
 // ======================================================
@@ -1159,84 +1031,6 @@ function renderResumoGeral() {
 }
 
 // ======================================================
-// MODAL – EDIÇÃO DE LANÇAMENTO FUTURO
-// ======================================================
-function abrirModalEdicaoFuturo(l) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-edicao';
-
-  modal.innerHTML = `
-    <div class="modal-overlay"></div>
-    <div class="modal-box">
-      <h3>Editar Despesa a Vencer</h3>
-
-      <label>Data</label>
-      <input type="date" id="edit-data" value="${formatarDataISO(l[1])}">
-
-      <label>Categoria</label>
-      <select id="edit-categoria"></select>
-
-      <label>Subcategoria</label>
-      <select id="edit-subcategoria"></select>
-
-      <label>Conta</label>
-      <select id="edit-conta"></select>
-
-      <label>Forma de Pagamento/Recebimento</label>
-      <select id="edit-pagamento"></select>
-
-
-      <label>Valor</label>
-      <input type="number" id="edit-valor" step="0.01" value="${l[7]}">
-
-      <label>Descrição</label>
-      <input type="text" id="edit-descricao" value="${l[8] || ''}">
-
-      <div class="modal-acoes">
-        <button id="btn-cancelar">Cancelar</button>
-        <button id="btn-salvar">Salvar</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  // FECHAR
-  modal.querySelector('.modal-overlay').onclick =
-  modal.querySelector('#btn-cancelar').onclick = () => modal.remove();
-
-  // PREENCHER SELECTS
-  preencherSelectCategoriasEdicao(l);
-  preencherSelectContasEdicao(l);
-  preencherSelectPagamentosEdicao(l);
-
-
-  // SALVAR
-  modal.querySelector('#btn-salvar').onclick = async () => {
-    const payload = {
-      id: l[0],
-      data: document.getElementById('edit-data').value,
-      tipo: l[2],
-      categoria: document.getElementById('edit-categoria').value,
-      subcategoria: document.getElementById('edit-subcategoria').value,
-      conta: document.getElementById('edit-conta').value,
-      pagamento: document.getElementById('edit-pagamento').value, // 👈 NOVO
-      valor: document.getElementById('edit-valor').value,
-      descricao: document.getElementById('edit-descricao').value,
-      usuario: usuarioLogado
-    };
-
-
-    await post('updateLancamentoFuturo', payload);
-
-    modal.remove();
-
-    await carregarLancamentosFuturos();
-    renderLancamentosFuturos();
-  };
-}
-
-// ======================================================
 // HELPERS – MODAL FUTURO
 // ======================================================
 function formatarDataISO(data) {
@@ -1289,6 +1083,7 @@ function preencherSelectContasEdicao(l) {
   });
 }
 
+
 // ======================================================
 // SELECT – PAGAMENTOS (EDIÇÃO)
 // ======================================================
@@ -1305,224 +1100,6 @@ function preencherSelectPagamentosEdicao(l) {
       </option>
     `;
   });
-}
-
-// ======================================================
-// MODAL – LANÇAMENTOS NORMAIS (POR CATEGORIA)
-// ======================================================
-function abrirModalLancamentosCategoria(categoria) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-edicao';
-
-  const lista = lancamentos.filter(l => l[3] === categoria);
-
-  
-
-  modal.innerHTML = `
-    <div class="modal-overlay"></div>
-    <div class="modal-box">
-      <h3>${categoria}</h3>
-      <div id="lista-lancamentos"></div>
-
-      <div class="modal-acoes">
-        <button id="btn-cancelar">Fechar</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  modal.querySelector('.modal-overlay').onclick =
-  modal.querySelector('#btn-cancelar').onclick = () => modal.remove();
-
-  const container = modal.querySelector('#lista-lancamentos');
-
-  lista
-    .sort((a, b) => new Date(a[1]) - new Date(b[1]))
-    .forEach(l => {
-      const div = document.createElement('div');
-      div.className = 'modal-item';
-
-      div.innerHTML = `
-        <span>${formatarDataBR(l[1])} – ${l[4]}</span>
-        <strong>${formatMoney(l[7])}</strong>
-        <div class="modal-actions">
-          <button class="btn-editar">Editar</button>
-          <button class="btn-excluir">Excluir</button>
-        </div>
-      `;
-
-      div.querySelector('.btn-editar').onclick = () => {
-        modal.remove();
-        abrirModalEdicaoLancamento(l);
-      };
-
-      div.querySelector('.btn-excluir').onclick = async () => {
-        if (!confirm('Deseja excluir este lançamento?')) return;
-
-        await post('deleteLancamento', { id: l[0] });
-
-        modal.remove();
-        await carregarLancamentos();
-        renderResumo();
-        renderTabelas();
-      };
-
-      container.appendChild(div);
-    });
-}
-
-// ======================================================
-// MODAL – EDIÇÃO DE LANÇAMENTO NORMAL
-// ======================================================
-function abrirModalEdicaoLancamento(l) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-edicao';
-
-  modal.innerHTML = `
-    <div class="modal-overlay"></div>
-    <div class="modal-box">
-      <h3>Editar Lançamento</h3>
-
-      <label>Data</label>
-      <input type="date" id="edit-data" value="${formatarDataISO(l[1])}">
-
-      <label>Categoria</label>
-      <select id="edit-categoria"></select>
-
-      <label>Subcategoria</label>
-      <select id="edit-subcategoria"></select>
-
-      <label>Conta</label>
-      <select id="edit-conta"></select>
-
-      <label>Forma de Pagamento/Recebimento</label>
-      <select id="edit-pagamento"></select>
-
-      <label>Valor</label>
-      <input type="number" id="edit-valor" step="0.01" value="${l[7]}">
-
-      <label>Descrição</label>
-      <input type="text" id="edit-descricao" value="${l[8] || ''}">
-
-      <div class="modal-acoes">
-        <button id="btn-cancelar">Cancelar</button>
-        <button id="btn-salvar">Salvar</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  modal.querySelector('.modal-overlay').onclick =
-  modal.querySelector('#btn-cancelar').onclick = () => modal.remove();
-
-  preencherSelectCategoriasEdicao(l);
-  preencherSelectContasEdicao(l);
-  preencherSelectPagamentosEdicao(l);
-
-  modal.querySelector('#btn-salvar').onclick = async () => {
-    const user = getUsuarioLogado();
-    if (!user) {
-      alert('Sessão expirada');
-      modal.remove();
-      mostrarLogin();
-      return;
-    }
-
-    const payload = {
-      id: l[0],
-      data: document.getElementById('edit-data').value,
-      tipo: l[2],
-      categoria: document.getElementById('edit-categoria').value,
-      subcategoria: document.getElementById('edit-subcategoria').value,
-      conta: document.getElementById('edit-conta').value,
-      pagamento: document.getElementById('edit-pagamento').value,
-      valor: document.getElementById('edit-valor').value,
-      descricao: document.getElementById('edit-descricao').value,
-      usuario: user.login
-    };
-
-    await post('updateLancamento', payload);
-
-    modal.remove();
-
-    await carregarLancamentos();
-    renderResumo();
-    renderTabelas();
-  };
-}
-
-// ======================================================
-// MODAL – ENTRADAS (POR CATEGORIA)
-// ======================================================
-function abrirModalEntradasCategoria(categoria) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-edicao';
-
-  const lista = lancamentos.filter(
-    l => l[2] === 'ENTRADA' && l[3] === categoria
-  );
-
-  if (!lista.length) {
-    alert('Nenhuma entrada registrada nesta categoria.');
-    return;
-  }
-
-  modal.innerHTML = `
-    <div class="modal-overlay"></div>
-    <div class="modal-box">
-      <h3>Entradas – ${categoria}</h3>
-      <div id="lista-entradas"></div>
-
-      <div class="modal-acoes">
-        <button id="btn-cancelar">Fechar</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  modal.querySelector('.modal-overlay').onclick =
-  modal.querySelector('#btn-cancelar').onclick = () => modal.remove();
-
-  const container = modal.querySelector('#lista-entradas');
-
-  lista
-    .sort((a, b) => new Date(a[1]) - new Date(b[1]))
-    .forEach(l => {
-      const div = document.createElement('div');
-      div.className = 'modal-item';
-
-      div.innerHTML = `
-        <span>${formatarDataBR(l[1])} – ${l[6]}</span>
-        <strong>${formatMoney(l[7])}</strong>
-        <div class="modal-actions">
-          <button class="btn-editar">Editar</button>
-          <button class="btn-excluir">Excluir</button>
-        </div>
-      `;
-
-      // EDITAR
-      div.querySelector('.btn-editar').onclick = () => {
-        modal.remove();
-        abrirModalEdicaoEntrada(l);
-      };
-
-      // EXCLUIR
-      div.querySelector('.btn-excluir').onclick = async () => {
-        if (!confirm('Deseja excluir esta entrada?')) return;
-
-        await post('deleteLancamento', { id: l[0] });
-
-        modal.remove();
-        await carregarLancamentos();
-        renderResumo();
-        renderTabelas();
-      };
-
-      container.appendChild(div);
-    });
 }
 
 // ======================================================
@@ -1596,16 +1173,16 @@ function abrirModalEditarConta(conta) {
 }
 
 // ======================================================
-// MODAL – EDIÇÃO DE ENTRADA (FALTAVA)
+// MODAL PADRÃO – EDIÇÃO DE LANÇAMENTO (VALOR EM R$ CORRETO)
 // ======================================================
-function abrirModalEdicaoEntrada(l) {
+function abrirModalEdicaoPadrao(l, tipoUpdate) {
   const modal = document.createElement('div');
   modal.className = 'modal-edicao';
 
   modal.innerHTML = `
     <div class="modal-overlay"></div>
     <div class="modal-box">
-      <h3>Editar Entrada</h3>
+      <h3>Editar Lançamento</h3>
 
       <label>Data</label>
       <input type="date" id="edit-data" value="${formatarDataISO(l[1])}">
@@ -1619,11 +1196,15 @@ function abrirModalEdicaoEntrada(l) {
       <label>Conta</label>
       <select id="edit-conta"></select>
 
-      <label>Forma de Recebimento</label>
+      <label>Forma de Pagamento/Recebimento</label>
       <select id="edit-pagamento"></select>
 
       <label>Valor</label>
-      <input type="number" id="edit-valor" step="0.01" value="${l[7]}">
+      <input
+        type="text"
+        id="edit-valor"
+        value="${formatarValorBR(l[7])}"
+      >
 
       <label>Descrição</label>
       <input type="text" id="edit-descricao" value="${l[8] || ''}">
@@ -1640,40 +1221,46 @@ function abrirModalEdicaoEntrada(l) {
   modal.querySelector('.modal-overlay').onclick =
   modal.querySelector('#btn-cancelar').onclick = () => modal.remove();
 
-  // Preenche selects
   preencherSelectCategoriasEdicao(l);
   preencherSelectContasEdicao(l);
   preencherSelectPagamentosEdicao(l);
 
   modal.querySelector('#btn-salvar').onclick = async () => {
-    const user = getUsuarioLogado();
-    if (!user) {
-      alert('Sessão expirada');
+    try {
+      const valorStr = document
+        .getElementById('edit-valor')
+        .value
+        .trim();
+
+      if (!valorStr) {
+        alert('Informe um valor válido.');
+        return;
+      }
+
+      await post(tipoUpdate, {
+        id: l[0],
+        data: document.getElementById('edit-data').value,
+        tipo: l[2],
+        categoria: document.getElementById('edit-categoria').value,
+        subcategoria: document.getElementById('edit-subcategoria').value,
+        conta: document.getElementById('edit-conta').value,
+        pagamento: document.getElementById('edit-pagamento').value,
+        valor: valorStr, // ✅ STRING "99,99"
+        descricao: document.getElementById('edit-descricao').value,
+        usuario: usuarioLogado
+      });
+
       modal.remove();
-      mostrarLogin();
-      return;
+
+      await carregarLancamentos();
+      await carregarLancamentosFuturos();
+
+      renderResumo();
+      renderLancamentosFuturos();
+
+    } catch (err) {
+      alert(err.message || 'Erro ao salvar edição.');
     }
-
-    const payload = {
-      id: l[0],
-      data: document.getElementById('edit-data').value,
-      tipo: 'ENTRADA',
-      categoria: document.getElementById('edit-categoria').value,
-      subcategoria: document.getElementById('edit-subcategoria').value,
-      conta: document.getElementById('edit-conta').value,
-      pagamento: document.getElementById('edit-pagamento').value,
-      valor: document.getElementById('edit-valor').value,
-      descricao: document.getElementById('edit-descricao').value,
-      usuario: user.login
-    };
-
-    await post('updateLancamento', payload);
-
-    modal.remove();
-
-    await carregarLancamentos();
-    renderResumo();
-    renderTabelas();
   };
 }
 
@@ -1735,7 +1322,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 🔄 Atualiza telas
     renderResumo();
-    renderTabelas();
 
     // 🔄 Atualiza período visual
     const el = document.getElementById('periodoAtual');
@@ -1799,47 +1385,514 @@ document.addEventListener('DOMContentLoaded', () => {
       if (alvo === 'resumo-geral') {
         renderResumoGeral();
       }
+
+      if (alvo === 'historico') {
+        carregarLancamentos().then(renderHistoricoLancamentos);
+      }
+      
     });
   });
 
 });
 
 // ======================================================
-// MOBILE – ABRIR / FECHAR TABELAS (SAFE)
+// DRE – IMPLEMENTAÇÃO ISOLADA E SEGURA
 // ======================================================
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.tabela-box h2').forEach(h => {
-    h.addEventListener('click', () => {
-      h.closest('.tabela-box')?.classList.toggle('aberta');
-    });
+
+// ---------- FILTRO DE MESES ----------
+function inicializarFiltrosDRE() {
+
+  const btn  = document.getElementById('dreMesBtn');
+  const menu = document.getElementById('dreMesMenu');
+  const selAno = document.getElementById('dreAno');
+
+  if (!btn || !menu || !selAno) return;
+
+  // ---------- ANOS ----------
+  const anoAtual = new Date().getFullYear();
+  selAno.innerHTML = '';
+  for (let a = anoAtual - 2; a <= anoAtual + 2; a++) {
+    selAno.innerHTML += `<option value="${a}">${a}</option>`;
+  }
+  selAno.value = anoAtual;
+
+  // ---------- ANOS/MESES ----------
+  const meses = [
+    'Janeiro','Fevereiro','Março','Abril',
+    'Maio','Junho','Julho','Agosto',
+    'Setembro','Outubro','Novembro','Dezembro'
+  ];
+
+  menu.innerHTML = meses.map((m, i) => `
+    <label>
+      <input type="checkbox" value="${i}" checked>
+      ${m}
+    </label>
+  `).join('');
+
+  // ---------- DROPDOWN ----------
+  btn.onclick = e => {
+    e.stopPropagation();
+    menu.classList.toggle('hidden');
+  };
+
+  // 🔒 IMPEDIR FECHAMENTO AO CLICAR DENTRO DO MENU
+  menu.onclick = e => {
+    e.stopPropagation();
+  };
+
+  // 🔒 FECHAR SOMENTE AO CLICAR FORA
+  document.addEventListener('click', () => {
+    menu.classList.add('hidden');
   });
-});
 
-//======================================================
-function logout() {
-  // limpa sessão
-  localStorage.removeItem(SESSION_KEY);
-  usuarioLogado = null;
 
-  // limpa estado global
-  categorias = [];
-  contas = [];
-  pagamentos = [];
-  lancamentos = [];
-  lancamentosFuturos = [];
-  lancamentosFuturosFiltrados = [];
+  // ---------- EVENTOS ----------
+  menu.querySelectorAll('input').forEach(chk => {
+    chk.onchange = atualizarDRE;
+  });
 
-  // volta para login
-  mostrarLogin();
+  selAno.onchange = atualizarDRE;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('btnLogout');
-  if (!btn) return;
+// ---------- CORE ----------
+function gerarDRECore({ lancamentos, visao, tipo, ano, mesesSelecionados }) {
 
-  btn.onclick = () => {
-    if (confirm('Deseja realmente sair do aplicativo?')) {
-      logout();
+  const meses = [...mesesSelecionados].sort((a, b) => a - b);
+  const mapa = {};
+
+  // ===============================
+  // 1. DEFINE TODAS AS CHAVES
+  // ===============================
+  const chaves = new Set();
+
+  lancamentos.forEach(l => {
+    const d = new Date(formatarDataISO(l[1]));
+    if (d.getFullYear() !== ano) return;
+    if (tipo !== 'TODOS' && l[2] !== tipo) return;
+
+    const chave =
+      visao === 'categoria' ? l[3] :
+      visao === 'conta'     ? l[5] :
+      l[2];
+
+    if (chave) chaves.add(chave);
+  });
+
+  // ===============================
+  // 3. SOMA OS VALORES
+  // ===============================
+  lancamentos.forEach(l => {
+
+    const d = new Date(formatarDataISO(l[1]));
+    const anoLanc = d.getFullYear();
+    const mesLanc = d.getMonth();
+    const tipoLanc = l[2];
+
+    if (anoLanc !== ano) return;
+    if (tipo !== 'TODOS' && tipoLanc !== tipo) return;
+    if (!meses.includes(mesLanc)) return;
+
+    const chave =
+      visao === 'categoria' ? l[3] :
+      visao === 'conta'     ? l[5] :
+      l[2];
+
+    const subcategoria = l[4];
+
+    const valor = parseValorBR(l[7]);
+    const valorAssinado = tipoLanc === 'SAIDA' ? -valor : valor;
+
+    // cria agrupamento
+    if (!mapa[chave]) {
+      mapa[chave] = {
+        valores: meses.map(() => 0),
+        subcategorias: {}
+      };
     }
+
+    // cria subcategoria
+    if (!mapa[chave].subcategorias[subcategoria]) {
+      mapa[chave].subcategorias[subcategoria] = meses.map(() => 0);
+    }
+
+    // índice do mês
+    const indexMes = meses.indexOf(mesLanc);
+    if (indexMes === -1) return;
+
+    // soma
+    mapa[chave].valores[indexMes] += valorAssinado;
+    mapa[chave].subcategorias[subcategoria][indexMes] += valorAssinado;
+  });
+
+  // ===============================
+  // 4. MONTA LINHAS
+  // ===============================
+  const linhas = Object.keys(mapa)
+  .sort()
+  .map(nome => {
+
+    const valores = mapa[nome].valores;
+
+    return {
+      nome,
+      valores,
+      total: valores.reduce((s, v) => s + v, 0),
+      subcategorias: mapa[nome].subcategorias
+    };
+
+  });
+
+  return {
+    meses,
+    linhas,
+    totalGeral: linhas.reduce((s, l) => s + l.total, 0),
+    visaoLabel:
+      visao === 'categoria' ? 'Categoria' :
+      visao === 'conta'     ? 'Conta' :
+      'Tipo'
   };
-});
+}
+
+// ---------- ATUALIZAR ----------
+function atualizarDRE() {
+
+  const mesesSelecionados = [
+    ...document.querySelectorAll('#dreMesMenu input:checked')
+  ].map(c => Number(c.value));
+
+  if (!mesesSelecionados.length) return;
+
+  const dados = gerarDRECore({
+    lancamentos,
+    visao: document.getElementById('dreVisao').value,
+    tipo: document.getElementById('dreTipo').value,
+    ano: Number(document.getElementById('dreAno').value),
+    mesesSelecionados
+  });
+
+  renderTabelaDRE(dados);
+}
+
+//====================================================
+// RENDER TABELA DRE 
+//====================================================
+function renderTabelaDRE(dados) {
+  const tabela = document.getElementById('tabelaDRE');
+  if (!tabela) return;
+
+  const thead = tabela.querySelector('thead');
+  const tbody = tabela.querySelector('tbody');
+  const tfoot = tabela.querySelector('tfoot');
+
+  thead.innerHTML = '';
+  tbody.innerHTML = '';
+  tfoot.innerHTML = '';
+
+  const nomeMes = m =>
+    new Date(2000, m).toLocaleDateString('pt-BR', { month: 'short' });
+
+  const analise = document.getElementById('dreAnalise')?.value || 'horizontal';
+  const tipoFiltro = document.getElementById('dreTipo')?.value || 'TODOS';
+  const mostrarDelta = dados.meses.length === 2 && analise === 'horizontal';
+
+  // ==================================================
+  // BASE DA VERTICAL = TOTAL DE ENTRADAS POR MÊS
+  // ==================================================
+  const totalEntradasPorMes = dados.meses.map((_, i) =>
+    dados.linhas.reduce((s, l) => l.valores[i] > 0 ? s + l.valores[i] : s, 0)
+  );
+
+  // =========================
+  // CABEÇALHO
+  // =========================
+  thead.innerHTML = `
+    <tr>
+      <th>${dados.visaoLabel}</th>
+      ${dados.meses.map(m => `<th>${nomeMes(m)}</th>`).join('')}
+      ${mostrarDelta ? '<th>Δ</th>' : ''}
+      <th>${analise === 'vertical' ? 'Total %' : 'Total'}</th>
+    </tr>
+  `;
+
+  // =========================
+  // LINHAS COM SUBCATEGORIA
+  // =========================
+  dados.linhas.forEach(l => {
+
+    const catId = l.nome.replace(/\s+/g,'_');
+
+    const deltaLinha = mostrarDelta
+      ? l.valores[1] - l.valores[0]
+      : 0;
+
+    // -------------------------
+    // LINHA DA CATEGORIA
+    // -------------------------
+    tbody.innerHTML += `
+      <tr class="dre-categoria" data-cat="${catId}">
+        <td>
+          <button class="dre-toggle" data-cat="${catId}">▶</button>
+          ${l.nome}
+        </td>
+
+        ${l.valores.map((v,i)=>{
+
+          if (analise === 'vertical') {
+            const base = totalEntradasPorMes[i] || 0;
+
+            if (v < 0 && base > 0) {
+              const perc = (Math.abs(v) / base) * 100;
+              return `<td class="valor-negativo">${perc.toFixed(1)}%</td>`;
+            }
+
+            return `<td>-</td>`;
+          }
+
+          return `
+            <td class="${v > 0 ? 'valor-positivo' : v < 0 ? 'valor-negativo' : ''}">
+              ${formatMoney(v)}
+            </td>
+          `;
+
+        }).join('')}
+
+        ${mostrarDelta
+          ? `<td class="${
+                deltaLinha >= 0 ? 'valor-positivo' : 'valor-negativo'
+              }">
+                ${formatMoney(deltaLinha)}
+            </td>`
+          : ''}
+
+        <td>
+          <strong>
+            ${
+              analise === 'vertical'
+                ? (() => {
+                    const totalEntradas = totalEntradasPorMes.reduce((s,v)=>s+v,0);
+                    const saida = Math.abs(l.total);
+                    const perc = totalEntradas ? (saida / totalEntradas) * 100 : 0;
+                    return `${perc.toFixed(1)}%`;
+                  })()
+                : formatMoney(l.total)
+            }
+          </strong>
+        </td>
+      </tr>
+    `;
+
+    // -------------------------
+    // SUBCATEGORIAS
+    // -------------------------
+    Object.entries(l.subcategorias || {}).forEach(([sub,valores]) => {
+
+      const totalSub = valores.reduce((s,v)=>s+v,0);
+
+      const deltaSub = mostrarDelta
+        ? valores[1] - valores[0]
+        : 0;
+
+      tbody.innerHTML += `
+        <tr class="dre-subcategoria hidden" data-cat="${catId}">
+          <td style="padding-left:30px">${sub}</td>
+
+          ${valores.map((v,i)=>{
+
+            if (analise === 'vertical') {
+              const base = totalEntradasPorMes[i] || 0;
+
+              if (v < 0 && base > 0) {
+                const perc = (Math.abs(v) / base) * 100;
+                return `<td class="valor-negativo">${perc.toFixed(1)}%</td>`;
+              }
+
+
+              return `<td>-</td>`;
+            }
+
+            return `
+              <td class="${v > 0 ? 'valor-positivo' : v < 0 ? 'valor-negativo' : ''}">
+                ${formatMoney(v)}
+              </td>
+            `;
+
+          }).join('')}
+
+          ${mostrarDelta
+          ? `<td class="${
+                deltaSub >= 0 ? 'valor-positivo' : 'valor-negativo'
+              }">
+                ${formatMoney(deltaSub)}
+            </td>`
+          : ''}
+
+          <td>
+            ${
+              analise === 'vertical'
+                ? (() => {
+                    const totalEntradas = totalEntradasPorMes.reduce((s,v)=>s+v,0);
+                    const saida = Math.abs(totalSub);
+                    const perc = totalEntradas ? (saida / totalEntradas) * 100 : 0;
+                    return `${perc.toFixed(1)}%`;
+                  })()
+                : formatMoney(totalSub)
+            }
+          </td>
+        </tr>
+      `;
+
+    });
+
+  });
+
+  // ==================================================
+  // TOGGLE DAS SUBCATEGORIAS
+  // ==================================================
+  document.querySelectorAll('.dre-toggle').forEach(btn => {
+
+    btn.onclick = () => {
+
+      const cat = btn.dataset.cat;
+
+      const linhas = document.querySelectorAll(
+        `.dre-subcategoria[data-cat="${cat}"]`
+      );
+
+      linhas.forEach(l => l.classList.toggle('hidden'));
+
+      btn.textContent =
+        btn.textContent === '▶' ? '▼' : '▶';
+
+    };
+
+  });
+
+  // =========================
+  // FOOTER — VERTICAL
+  // =========================
+  if (analise === 'vertical') {
+    tfoot.innerHTML = `
+      <tr>
+        <th>Total comprometido</th>
+        ${dados.meses.map((_, i) => {
+          const saidas = dados.linhas.reduce((s, l) => l.valores[i] < 0 ? s + Math.abs(l.valores[i]) : s, 0);
+          const entradas = totalEntradasPorMes[i] || 0;
+          const perc = entradas ? (saidas / entradas) * 100 : 0;
+          return `<th>${perc.toFixed(1)}%</th>`;
+        }).join('')}
+        <th>—</th>
+      </tr>
+    `;
+    return;
+  }
+
+  // ==================================================
+  // FOOTER — ENTRADAS + SAÍDAS (Δ CORRETO)
+  // ==================================================
+
+    const totalEntradas = dados.meses.map((_, i) =>
+      dados.linhas.reduce((s, l) => l.valores[i] > 0 ? s + l.valores[i] : s, 0)
+    );
+
+    const totalSaidas = dados.meses.map((_, i) =>
+      dados.linhas.reduce((s, l) => l.valores[i] < 0 ? s + Math.abs(l.valores[i]) : s, 0)
+    );
+
+    const resultado = totalEntradas.map((v, i) => v - totalSaidas[i]);
+
+    const deltaEntradas = mostrarDelta ? totalEntradas[1] - totalEntradas[0] : 0;
+    const deltaSaidas   = mostrarDelta ? totalSaidas[1] - totalSaidas[0] : 0;
+    const deltaResultado = mostrarDelta
+      ? (totalEntradas[1] - totalSaidas[1]) - (totalEntradas[0] - totalSaidas[0])
+      : 0;
+
+    tfoot.innerHTML = `
+      <tr>
+        <th>Total Recebido</th>
+        ${totalEntradas.map(v => `<th class="valor-positivo">${formatMoney(v)}</th>`).join('')}
+        ${mostrarDelta ? `<th class="${deltaEntradas >= 0 ? 'valor-positivo' : 'valor-negativo'}">${formatMoney(deltaEntradas)}</th>` : ''}
+        <th class="valor-positivo">${formatMoney(totalEntradas.reduce((s,v)=>s+v,0))}</th>
+      </tr>
+
+      <tr>
+        <th>Total Gasto</th>
+        ${totalSaidas.map(v => `<th class="valor-negativo">${formatMoney(-v)}</th>`).join('')}
+        ${mostrarDelta ? `<th class="${deltaSaidas >= 0 ? 'valor-negativo' : 'valor-positivo'}">${formatMoney(-deltaSaidas)}</th>` : ''}
+        <th class="valor-negativo">${formatMoney(-totalSaidas.reduce((s,v)=>s+v,0))}</th>
+      </tr>
+
+      <tr>
+        <th>Resultado</th>
+        ${resultado.map(v => `<th class="${v >= 0 ? 'valor-positivo' : 'valor-negativo'}">${formatMoney(v)}</th>`).join('')}
+        ${mostrarDelta ? `<th class="${deltaResultado >= 0 ? 'valor-positivo' : 'valor-negativo'}">${formatMoney(deltaResultado)}</th>` : ''}
+        <th class="${dados.totalGeral >= 0 ? 'valor-positivo' : 'valor-negativo'}">${formatMoney(dados.totalGeral)}</th>
+      </tr>
+    `;
+  }
+
+
+  function renderHistoricoLancamentos() {
+
+  const tbody = document.querySelector('#tabelaHistorico tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  if (!lancamentos.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" style="text-align:center;opacity:.6">
+          Nenhum lançamento encontrado
+        </td>
+      </tr>`;
+    return;
+  }
+
+  lancamentos
+    .sort((a,b)=> new Date(formatarDataISO(b[1])) - new Date(formatarDataISO(a[1])))
+    .forEach(l => {
+
+      const valor = parseValorBR(l[7]);
+
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+        <td>${formatarDataBR(l[1])}</td>
+        <td>${l[2]}</td>
+        <td>${l[3]}</td>
+        <td>${l[4]}</td>
+        <td>${l[5]}</td>
+        <td>${l[6]}</td>
+        <td class="${valor >=0 ? 'valor-positivo':'valor-negativo'}">
+          ${formatMoney(valor)}
+        </td>
+        <td>${l[8] || ''}</td>
+        <td>
+          <button class="btn-editar btn-acao">Editar</button>
+          <button class="btn-excluir btn-acao">Excluir</button>
+        </td>
+      `;
+
+      // EDITAR
+      tr.querySelector('.btn-editar').onclick = () =>
+        abrirModalEdicaoPadrao(l,'updateLancamento');
+
+      // EXCLUIR
+      tr.querySelector('.btn-excluir').onclick = async () => {
+
+        if (!confirm('Excluir este lançamento?')) return;
+
+        await post('deleteLancamento',{ id:l[0] });
+
+        await carregarLancamentos();
+        renderHistoricoLancamentos();
+        renderResumo();
+        atualizarDRE();
+        renderHistoricoLancamentos();
+      };
+
+      tbody.appendChild(tr);
+
+    });
+}
