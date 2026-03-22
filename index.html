@@ -81,12 +81,12 @@
         </button>
 
         <button class="side-link" data-tab="nova-despesa">
-          ➕ <span>Nova Despesa</span>
+         ➕ <span>Novo Lançamento</span>
         </button>
 
 
         <button class="side-link" data-tab="lancamentos">
-          💳 <span>Lançamentos</span>
+          📊 <span>Demonstrativo Financeiro</span>
         </button>
 
         <button class="side-link" data-tab="futuros">
@@ -99,6 +99,10 @@
 
         <button class="side-link" data-tab="resumo-geral">
           📊 <span>Resumo Geral</span>
+        </button>
+
+        <button class="side-link" data-tab="historico">
+          📜 <span>Histórico</span>
         </button>
 
       </nav>
@@ -186,77 +190,71 @@
     <main id="tab-lancamentos" class="tab-content">
 
       <section class="tabela-box">
-        <h2>📊 Gastos por Categoria × Mês</h2>
 
+        <h2>📊 Demonstrativo Financeiro (DRE)</h2>
+
+        <!-- FILTROS -->
+        <div class="dre-filtros">
+
+          <div>
+            <label>Ano</label>
+            <select id="dreAno"></select>
+          </div>
+
+          <div class="dre-dropdown" id="dreMesDropdown">
+
+            <button type="button" class="dre-dropdown-btn" id="dreMesBtn">
+              Meses selecionados
+            </button>
+
+            <div class="dre-dropdown-menu hidden" id="dreMesMenu">
+              <!-- meses via JS -->
+            </div>
+
+          </div>
+
+          <div>
+            <label>Tipo</label>
+            <select id="dreTipo">
+              <option value="TODOS">Entradas + Saídas</option>
+              <option value="ENTRADA">Entradas</option>
+              <option value="SAIDA">Saídas</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Visão</label>
+            <select id="dreVisao">
+              <option value="categoria">Categoria × Mês</option>
+              <option value="conta">Conta × Mês</option>
+              <option value="tipo">Tipo × Mês</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Análise</label>
+            <select id="dreAnalise">
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical">Vertical (%)</option>
+            </select>
+          </div>
+
+        </div>
+
+
+        <!-- TABELA -->
         <div class="tabela-wrapper">
-          <table id="tabelaCategoriaMes" class="tabela-analitica">
-            <thead>
-              <tr>
-                <th>Categoria</th>
-                <th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th>
-                <th>Mai</th><th>Jun</th><th>Jul</th><th>Ago</th>
-                <th>Set</th><th>Out</th><th>Nov</th><th>Dez</th>
-                <th>Total</th>
-              </tr>
-            </thead>
+          <table id="tabelaDRE" class="tabela-analitica">
+            <thead></thead>
             <tbody></tbody>
-            <tfoot>
-              <tr>
-                <th>Total</th>
-                <th colspan="12"></th>
-                <th></th>
-              </tr>
-            </tfoot>
+            <tfoot></tfoot>
           </table>
         </div>
-      </section>
 
-      <section class="tabela-box">
-        <h2>💳 Gastos por Categoria × Tipo de Pagamento</h2>
-
-        <div class="tabela-wrapper">
-          <table id="tabelaCategoriaTipo" class="tabela-analitica">
-            <thead>
-              <tr>
-                <th>Categoria</th>
-                <th>Débito</th>
-                <th>Crédito</th>
-                <th>Pix / TED</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot>
-              <tr>
-                <th>Total</th>
-                <th></th><th></th><th></th><th></th>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </section>
-
-      <!-- ✅ NOVA TABELA: ENTRADAS -->
-      <section class="tabela-box">
-        <h2>💰 Entradas × Tipo de Recebimento</h2>
-
-        <div class="tabela-wrapper">
-          <table id="tabelaEntradasTipo" class="tabela-analitica">
-            <thead>
-              <tr>
-                <th>Categoria</th>
-                <th>Pix</th>
-                <th>TED</th>
-                <th>Dinheiro</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
       </section>
 
     </main>
+
 
     <!-- =====================================================
      ABA: LANÇAMENTOS FUTUROS
@@ -311,12 +309,11 @@
           <div class="acoes-futuros">
             <button
               id="btnPagarTudo"
-              class="btn-primario btn-consolidar"
+              class="btn-consolidar-futuro"
               disabled
               title="Use os filtros para habilitar"
-              
             >
-              💳 Consolidar Despesas
+              💳 Consolidar
             </button>
           </div>
 
@@ -372,7 +369,13 @@
           <select id="pagamento" required></select>
 
           <label>Valor</label>
-          <input type="number" id="valor" step="0.01" required />
+          <input
+            type="text"
+            id="valor"
+            inputmode="decimal"
+            placeholder="Ex: 100,50"
+            required
+          />
 
           <label>Data</label>
           <input type="date" id="data" required />
@@ -400,9 +403,9 @@
 
             <label>Valor de cada parcela</label>
             <input
-              type="number"
+              type="text"
               id="valorParcela"
-              step="0.01"
+              inputmode="decimal"
               placeholder="Ex: 250,00"
             />
 
@@ -426,7 +429,39 @@
 
     </main>
 
-  </div>
+  <!-- =====================================================
+     ABA: HISTÓRICO
+===================================================== -->
+<main id="tab-historico" class="tab-content">
+
+  <section class="tabela-box">
+
+    <h2>Histórico de Lançamentos</h2>
+
+    <div class="tabela-wrapper">
+      <table id="tabelaHistorico" class="tabela-analitica">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Tipo</th>
+            <th>Categoria</th>
+            <th>Subcategoria</th>
+            <th>Conta</th>
+            <th>Pagamento</th>
+            <th>Valor</th>
+            <th>Descrição</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody></tbody>
+
+      </table>
+    </div>
+
+  </section>
+
+</main>
 
   <!-- JS -->
   <script src="app.js"></script>
