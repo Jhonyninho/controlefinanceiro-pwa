@@ -413,22 +413,6 @@ body {
   font-weight: 600;
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .tabela-box {
-    margin: 16px 12px;
-    padding: 16px;
-  }
-
-  .tabela-box h2 {
-    font-size: 1rem;
-  }
-
-  .tabela-analitica {
-    min-width: 900px;
-  }
-}
-
 /* =====================================================
    CORREÇÃO – TEXTO DA COLUNA CATEGORIA
 ===================================================== */
@@ -1187,11 +1171,6 @@ body {
   margin-left: 10px;
 }
 
-/* =====================================================
-   MOBILE FINAL – AJUSTES DEFINITIVOS (SAFE)
-   Colar no FINAL do style.css
-===================================================== */
-
 @media (max-width: 768px) {
 
   /* =====================================================
@@ -1263,33 +1242,6 @@ body {
     cursor: pointer;
   }
 
-  /* =====================================================
-     LANÇAMENTOS FUTUROS – MOBILE
-  ===================================================== */
-
-  /* Esconde coluna "Conta" (ganho de espaço) */
-  #tabelaLancamentosFuturos th:nth-child(3),
-  #tabelaLancamentosFuturos td:nth-child(3) {
-    display: none;
-  }
-
-  /* Centraliza ações */
-  #tabelaLancamentosFuturos td:last-child {
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  /* Botões maiores para toque */
-  #tabelaLancamentosFuturos button {
-    padding: 10px 12px;
-    font-size: 0.75rem;
-    border-radius: 10px;
-  }
-
-  /* Mantém destaque no botão principal */
-  #tabelaLancamentosFuturos .btn-pagar {
-    font-weight: 700;
-  }
 
   /* =====================================================
      COLAPSAR TABELAS NO MOBILE (FOCO)
@@ -1333,38 +1285,7 @@ body {
   }
 
 }
-
-/* =====================================================
-   AJUSTE BOTÕES – LANÇAMENTOS FUTUROS
-===================================================== */
-
-/* Botão Consolidar Despesas (Pagar Tudo) */
-.btn-consolidar {
-  padding: 6px 12px;
-  font-size: 0.75rem;
-  border-radius: 10px;
-}
-
-/* Botão Consolidar (linha da tabela) */
-#tabelaLancamentosFuturos .btn-pagar {
-  padding: 6px 10px;
-  font-size: 0.7rem;
-  border-radius: 8px;
-}
-
-/* Mobile: ainda mais compacto */
-@media (max-width: 768px) {
-  .btn-consolidar {
-    padding: 5px 10px;
-    font-size: 0.7rem;
-  }
-
-  #tabelaLancamentosFuturos .btn-pagar {
-    padding: 5px 8px;
-    font-size: 0.65rem;
-  }
-}
-
+  
 /* ======================================================
    TEMA AZUL METÁLICO – FINAL
    (APLICAR NO FINAL DO style.css)
@@ -1488,28 +1409,6 @@ body {
   background-color: rgba(37,99,235,0.08);
 }
 
-/* ================= BOTÕES ================= */
-
-button,
-.btn-primario {
-  background: linear-gradient(
-    180deg,
-    var(--metal-blue),
-    var(--metal-blue-soft)
-  );
-  color: #ffffff;
-  border: none;
-}
-
-button:hover,
-.btn-primario:hover {
-  filter: brightness(1.1);
-}
-
-button:disabled {
-  background: #1e293b;
-  color: var(--metal-muted);
-}
 
 /* ================= FORMULÁRIOS ================= */
 
@@ -1538,23 +1437,6 @@ label {
 
 .modal-overlay {
   background-color: rgba(2,6,23,0.85);
-}
-
-/* ================= MOBILE ================= */
-
-@media (max-width: 768px) {
-
-  .app-header {
-    background-color: #020617;
-  }
-
-  .side-menu {
-    background-color: #020617;
-  }
-
-  .tabela-box {
-    box-shadow: none;
-  }
 }
 
 /* ======================================================
@@ -1646,4 +1528,294 @@ label {
 
 .btn-logout:hover {
   background: rgba(255, 80, 80, 0.12);
+}
+
+/* ======================================================
+   MODAL – TEMA AZUL METÁLICO (FINAL / DEFINITIVO)
+====================================================== */
+
+/* Caixa do modal */
+.modal-edicao .modal-box {
+  background-color: var(--metal-bg-soft); /* mesmo fundo do app */
+  border: 1px solid var(--metal-border);
+  color: var(--metal-text);
+}
+
+/* Título */
+.modal-edicao h3 {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Labels */
+.modal-edicao label {
+  color: var(--metal-muted); /* secundário, mas visível */
+  font-weight: 600;
+  opacity: 1;               /* REMOVE qualquer herança */
+}
+
+/* Inputs e selects */
+.modal-edicao input,
+.modal-edicao select {
+  background-color: #020617;      /* mesmo dos formulários */
+  color: #ffffff;                 /* texto legível */
+  border: 1px solid var(--metal-border);
+}
+
+/* Texto digitado */
+.modal-edicao input,
+.modal-edicao select,
+.modal-edicao textarea {
+  font-weight: 500;
+}
+
+/* Placeholder */
+.modal-edicao input::placeholder {
+  color: var(--metal-muted);
+  opacity: 0.9;
+}
+
+/* Texto de leitura (listas, spans, valores) */
+.modal-edicao span,
+.modal-edicao p,
+.modal-edicao strong {
+  color: var(--metal-text);
+}
+
+/* Modal de LISTA (Categoria × Mês) */
+.modal-edicao .modal-item span {
+  color: var(--metal-muted);
+}
+
+.modal-edicao .modal-item strong {
+  color: #ffffff;
+}
+
+/* Separadores */
+.modal-edicao .modal-item {
+  border-bottom: 1px solid rgba(148,163,184,0.2);
+}
+
+/* Overlay */
+.modal-edicao .modal-overlay {
+  background-color: rgba(2,6,23,0.88);
+}
+
+/* DRE nunca colapsa */
+#tab-lancamentos .tabela-wrapper {
+  display: block !important;
+}
+
+/* ======================================================
+   DRE – FILTROS (LAYOUT)
+====================================================== */
+
+#tab-lancamentos .dre-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+#tab-lancamentos .dre-filtros > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+}
+
+#tab-lancamentos .dre-filtros label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--metal-muted, #94a3b8);
+}
+
+#tab-lancamentos .dre-filtros select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--metal-border, #1e293b);
+  background-color: #020617;
+  color: #ffffff;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+
+  #tab-lancamentos .dre-filtros {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  #tab-lancamentos .dre-filtros > div {
+    width: 100%;
+  }
+
+}
+
+  /* ======================================================
+   DRE – DROPDOWN MULTISELECT (MESES)
+====================================================== */
+
+.dre-dropdown {
+  position: relative;
+}
+
+.dre-dropdown-btn {
+  width: 180px;
+  height: 38px;
+
+  background-color: #020617;
+  color: #ffffff;
+
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+
+  padding: 0 12px;
+  text-align: left;
+
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.dre-dropdown-btn::after {
+  content: '▾';
+  float: right;
+  opacity: 0.6;
+}
+
+.dre-dropdown-menu {
+  position: absolute;
+  top: 42px;
+  left: 0;
+  z-index: 50;
+
+  width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+
+  background-color: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+
+  padding: 8px 0;
+}
+
+.dre-dropdown-menu label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.dre-dropdown-menu label:hover {
+  background-color: #0f172a;
+}
+
+.hidden {
+  display: none;
+}
+
+/* ======================================================
+   DRE – CORES CONTÁBEIS (ESPECIFICIDADE CORRETA)
+====================================================== */
+
+/* Células numéricas da DRE */
+.tabela-analitica td.valor-positivo,
+.tabela-analitica th.valor-positivo {
+  color: #15803d !important; /* verde escuro */
+  font-weight: 600;
+}
+
+.tabela-analitica td.valor-negativo,
+.tabela-analitica th.valor-negativo {
+  color: #b91c1c !important; /* vermelho escuro */
+  font-weight: 600;
+}
+
+/* ======================================================
+   AJUSTE LAYOUT – FUTUROS (SEM ALTERAR HTML)
+====================================================== */
+
+.filtros-futuros-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Faz os dois blocos se comportarem igual */
+.filtros-futuros,
+.acoes-futuros {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Remove possível margem herdada */
+.acoes-futuros {
+  margin-bottom: 18px; /* igual ao .filtros-futuros */
+}
+
+/* Deixa o botão do mesmo tamanho do Limpar */
+.btn-consolidar-futuro {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: none;
+
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-consolidar-futuro:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ======================================================
+   CORREÇÃO PWA – TABELAS VISÍVEIS
+====================================================== */
+
+#tab-futuros .tabela-wrapper,
+#tab-contas .tabela-wrapper {
+  display: block !important;
+}
+
+/*======================================================
+    SUB CATEGORIAS
+======================================================*/
+.dre-toggle{
+  border:none;
+  background:none;
+  cursor:pointer;
+  font-size:12px;
+  margin-right:6px;
+}
+
+.dre-subcategoria td{
+  padding-left:32px;
+  font-size:0.82rem;
+  opacity:0.9;
+}
+
+.dre-sub{
+  padding-left:32px !important;
+}
+
+/* ======================================================
+   HISTÓRICO – VISÍVEL NO MOBILE
+====================================================== */
+
+#tab-historico .tabela-wrapper {
+  display: block !important;
+}
+
+#tab-historico .tabela-analitica {
+  min-width: 900px;
 }
