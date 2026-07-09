@@ -136,8 +136,16 @@ function formatarDataBR(dataISO) {
 // INIT GERAL + LOGIN
 // ======================================================
 document.addEventListener('DOMContentLoaded', () => {
+
   configurarLogin();
+
+  // Botão Sair
+  document
+    .getElementById('btnLogout')
+    ?.addEventListener('click', logout);
+
   verificarSessao();
+
 });
 
 // ---------------- LOGIN ----------------
@@ -279,6 +287,30 @@ function verificarSessao() {
 function mostrarLogin() {
   document.getElementById('login-screen')?.classList.remove('hidden');
   document.getElementById('app')?.classList.add('hidden');
+}
+
+// ======================================================
+// LOGOUT
+// ======================================================
+async function logout() {
+
+  localStorage.removeItem(SESSION_KEY);
+
+  usuarioLogado = null;
+
+  categorias = [];
+  contas = [];
+  pagamentos = [];
+  lancamentos = [];
+  lancamentosFuturos = [];
+  lancamentosFuturosFiltrados = [];
+
+  document.getElementById('loginForm')?.reset();
+
+  mostrarLogin();
+
+  location.reload();
+
 }
 
 function iniciarApp() {
