@@ -662,9 +662,11 @@ function aplicarFiltrosLancamentosFuturos() {
 // LANÇAMENTOS FUTUROS – RENDER (COM FILTRO)
 function renderLancamentosFuturos(lista = lancamentosFuturos) {
   const tbody = document.querySelector('#tabelaLancamentosFuturos tbody');
+const tfoot = document.querySelector('#tabelaLancamentosFuturos tfoot');
   if (!tbody) return;
 
   tbody.innerHTML = '';
+  tfoot.innerHTML = '';
 
   if (!lista.length) {
     tbody.innerHTML = `
@@ -758,15 +760,27 @@ function renderLancamentosFuturos(lista = lancamentosFuturos) {
     });
 
   const trTotal = document.createElement('tr');
-  trTotal.innerHTML = `
-    <td colspan="3"><strong>Totais</strong></td>
-    <td>
-      <strong style="color:green">${formatMoney(totalEntradas)}</strong><br>
-      <strong style="color:red">${formatMoney(totalSaidas)}</strong>
-    </td>
-    <td></td>
+  tfoot.innerHTML = `
+  <tr>
+
+      <th colspan="3">
+          Totais
+      </th>
+
+      <th>
+          <div style="color:green">
+              ${formatMoney(totalEntradas)}
+          </div>
+
+          <div style="color:red">
+              ${formatMoney(totalSaidas)}
+          </div>
+      </th>
+
+      <th></th>
+
+  </tr>
   `;
-  tbody.appendChild(trTotal);
 }
 
 // ======================================================
