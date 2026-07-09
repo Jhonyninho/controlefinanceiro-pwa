@@ -38,8 +38,17 @@ function getUsuarioLogado() {
 }
 
 async function post(action, payload = {}) {
+
+  const user = getUsuarioLogado();
+
+  // Adiciona automaticamente o usuário em todas as requisições,
+  // exceto no login.
+  if (action !== 'login' && user && !payload.usuario) {
+    payload.usuario = user.login;
+  }
+
   try {
-    // tenta POST primeiro
+
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: {
@@ -54,13 +63,19 @@ async function post(action, payload = {}) {
     return await res.json();
 
   } catch (err) {
-    // fallback GET (segurança total)
-    const params = new URLSearchParams({ action, ...payload }).toString();
-    const res = await fetch(`${API_URL}?${params}`);
-    return await res.json();
-  }
-}
 
+    const params = new URLSearchParams({
+      action,
+      ...payload
+    }).toString();
+
+    const res = await fetch(`${API_URL}?${params}`);
+
+    return await res.json();
+
+  }
+
+}
 
 function formatMoney(v) {
   return Number(v || 0).toLocaleString('pt-BR', {
@@ -395,7 +410,22 @@ async function carregarPagamentos() {
 // ======================================================
 async function carregarLancamentos() {
 
-  const res = await post('getLancamentos');
+  const user = getUsuarioLogado();
+
+  if (!user) {
+    lancamentos = [];
+    return;
+  }
+
+  const res = await post('getLancamentos', {
+    usuario: user.login
+  });
+
+  if (!res.ok) {
+    lancamentos = [];
+    console.error(res.msg);
+    return;
+  }
 
   lancamentos = res.lancamentos || [];
 
@@ -405,17 +435,26 @@ async function carregarLancamentos() {
 // LANÇAMENTOS FUTUROS
 // ======================================================
 async function carregarLancamentosFuturos() {
+
   const user = getUsuarioLogado();
+
   if (!user) {
     lancamentosFuturos = [];
     return;
   }
 
-  const res = await post('getLancamentosFuturos');
+  const res = await post('getLancamentosFuturos', {
+    usuario: user.login
+  });
 
-  lancamentosFuturos = (res.lancamentos || []).filter(l =>
-    String(l[9]).trim() === String(user.login).trim()
-  );
+  if (!res.ok) {
+    lancamentosFuturos = [];
+    console.error(res.msg);
+    return;
+  }
+
+  lancamentosFuturos = res.lancamentos || [];
+
 }
 
 // ======================================================
