@@ -1,7 +1,7 @@
 // ======================================================
 // CONFIGURAÇÃO
 // ======================================================
-const API_URL = 'https://script.google.com/macros/s/AKfycbwwLJDDYbwoRqqQ329HbSUadGS5Y1hJWoWIAT7To-TV-EHfOA6mum-0XvmizO-svnq0/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwwLJDDYbwoRqqQ329HbSUadGS5Y1hJWoWIAT7To-TV-EHfOA6mum-0XvmizO-svnq0/exec'
 
 // ======================================================
 // SESSÃO
