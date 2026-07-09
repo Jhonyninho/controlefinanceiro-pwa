@@ -1831,9 +1831,6 @@ label {
 }
 
 #tabelaLancamentosFuturos tfoot th:first-child{
-    position:sticky;
-    left:0;
-    z-index:5;
     background:#e0e7ff;
 }
 
