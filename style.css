@@ -1819,3 +1819,24 @@ label {
 #tab-historico .tabela-analitica {
   min-width: 900px;
 }
+
+/*=====================================================
+  TABELA FUTUROS - RODAPÉ MOBILE
+=====================================================*/
+
+#tabelaLancamentosFuturos tfoot th{
+    background:#e0e7ff;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+#tabelaLancamentosFuturos tfoot th:first-child{
+    position:sticky;
+    left:0;
+    z-index:5;
+    background:#e0e7ff;
+}
+
+#tabelaLancamentosFuturos tfoot th:last-child{
+    text-align:right;
+}
