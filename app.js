@@ -1362,7 +1362,6 @@ function aplicarMesesPersonalizados() {
 // ======================================================
 // RENDERIZAÇÃO - RESUMO GERAL
 // ======================================================
-
 function renderResumoGeral() {
 
     const container = document.getElementById("cards-resumo-geral");
@@ -1380,28 +1379,29 @@ function renderResumoGeral() {
         {
             titulo: "Saldo Atual",
             valor: resumo.saldoAtual,
-            classe: resumo.saldoAtual >= 0 ? "positivo" : "negativo"
+            classe: resumo.saldoAtual >= 0 ? "positivo" : "negativo",
+            icone: "💰"
         },
 
         {
             titulo: "Entradas Futuras",
             valor: resumo.entradasFuturas,
-            classe: "positivo"
+            classe: "positivo",
+            icone: "📈"
         },
 
         {
             titulo: "Saídas Futuras",
             valor: resumo.saidasFuturas,
-            classe: "negativo"
+            classe: "negativo",
+            icone: "📉"
         },
 
         {
             titulo: "Saldo Projetado",
             valor: resumo.saldoProjetado,
-            classe:
-                resumo.saldoProjetado >= 0
-                    ? "positivo"
-                    : "negativo"
+            classe: resumo.saldoProjetado >= 0 ? "positivo" : "negativo",
+            icone: "🎯"
         }
 
     ];
@@ -1412,13 +1412,6 @@ function renderResumoGeral() {
 
         div.className = `card-resumo ${card.classe}`;
 
-        const sinal =
-            card.valor > 0
-                ? "▲"
-                : card.valor < 0
-                    ? "▼"
-                    : "■";
-
         div.innerHTML = `
 
             <div class="card-resumo-topo">
@@ -1427,8 +1420,8 @@ function renderResumoGeral() {
                     ${card.titulo}
                 </span>
 
-                <span class="indicador">
-                    ${sinal}
+                <span class="icone">
+                    ${card.icone}
                 </span>
 
             </div>
