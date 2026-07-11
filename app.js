@@ -220,6 +220,9 @@ async function iniciarSistema() {
   inicializarFormularioNovaDespesa();
 
   renderResumo();
+
+  renderResumoGeral();
+
   renderLancamentosFuturos();
 
   // ==================================================
@@ -1011,126 +1014,58 @@ function calcularResumoGeral() {
 
   const saldoAtual = entradas - saidas;
 
-  // ===================================================
-  // DEFINE QUAIS LANÇAMENTOS FUTUROS ENTRAM NO CÁLCULO
-  // ===================================================
-
-  const hoje = new Date();
-
-  const mesAtual = hoje.getMonth();
-
-  const anoAtual = hoje.getFullYear();
-
-  let mesesPermitidos = [];
-
-  switch (projecaoSaldo.modo) {
-
-    case 'mes1':
-      mesesPermitidos = [
-        {
-          ano: anoAtual,
-          mes: mesAtual
-        }
-      ];
-      break;
-
-    case 'mes3':
-
-      for (let i = 0; i < 3; i++) {
-
-        const d = new Date(anoAtual, mesAtual + i);
-
-        mesesPermitidos.push({
-          ano: d.getFullYear(),
-          mes: d.getMonth()
-        });
-
-      }
-
-      break;
-
-    case 'mes6':
-
-      for (let i = 0; i < 6; i++) {
-
-        const d = new Date(anoAtual, mesAtual + i);
-
-        mesesPermitidos.push({
-          ano: d.getFullYear(),
-          mes: d.getMonth()
-        });
-
-      }
-
-      break;
-
-    case 'personalizado':
-
-      mesesPermitidos = projecaoSaldo.mesesSelecionados.map(m => ({
-        ano: anoAtual,
-        mes: Number(m)
-      }));
-
-      break;
-
-    default:
-
-      mesesPermitidos = null;
-
-  }
-
-  // ===================================================
+// ===================================================
 // FILTRA LANÇAMENTOS FUTUROS
 // ===================================================
 
-const futuros = obterLancamentosProjetados();
+  const futuros = obterLancamentosProjetados();
 
-  // ===============================
-  // FUTUROS
-  // ===============================
-  let entradasFuturas = 0;
-  let saidasFuturas = 0;
+    // ===============================
+    // FUTUROS
+    // ===============================
+    let entradasFuturas = 0;
+    let saidasFuturas = 0;
 
-  const gruposCredito = {};
+    const gruposCredito = {};
 
-  futuros.forEach(l => {
+    futuros.forEach(l => {
 
-    const tipo = l[2];
-    const pagamento = l[6];
-    const valor = parseValorBR(l[7]);
-    const descricao = (l[8] || '').trim();
-    const conta = l[5];
-    const fatura = l[11];
+      const tipo = l[2];
+      const pagamento = l[6];
+      const valor = parseValorBR(l[7]);
+      const descricao = (l[8] || '').trim();
+      const conta = l[5];
+      const fatura = l[11];
 
-    // ENTRADAS
-    if (tipo === 'ENTRADA') {
-      entradasFuturas += valor;
-      return;
-    }
-
-    // SAÍDAS NÃO CRÉDITO
-    if (tipo === 'SAIDA' && pagamento !== 'Crédito') {
-      saidasFuturas += valor;
-      return;
-    }
-
-    // CRÉDITO
-    if (tipo === 'SAIDA' && pagamento === 'Crédito') {
-
-      const chave = `${conta}||${descricao}`;
-
-      if (!gruposCredito[chave]) {
-        gruposCredito[chave] = [];
+      // ENTRADAS
+      if (tipo === 'ENTRADA') {
+        entradasFuturas += valor;
+        return;
       }
 
-      gruposCredito[chave].push({
-        valor,
-        fatura
-      });
+      // SAÍDAS NÃO CRÉDITO
+      if (tipo === 'SAIDA' && pagamento !== 'Crédito') {
+        saidasFuturas += valor;
+        return;
+      }
 
-    }
+      // CRÉDITO
+      if (tipo === 'SAIDA' && pagamento === 'Crédito') {
 
-  });
+        const chave = `${conta}||${descricao}`;
+
+        if (!gruposCredito[chave]) {
+          gruposCredito[chave] = [];
+        }
+
+        gruposCredito[chave].push({
+          valor,
+          fatura
+        });
+
+      }
+
+    });
 
   // ===================================================
   // FATURA ÚNICA × PARCELAMENTO
@@ -1198,8 +1133,8 @@ function obterLancamentosProjetados() {
 
     const hoje = new Date();
 
-    const mesAtual = hoje.getMonth();
     const anoAtual = hoje.getFullYear();
+    const mesAtual = hoje.getMonth();
 
     let mesesSelecionados = [];
 
@@ -1215,6 +1150,7 @@ function obterLancamentosProjetados() {
             });
 
             break;
+
         }
 
         case "mes3":
@@ -1255,6 +1191,9 @@ function obterLancamentosProjetados() {
             }));
 
             break;
+
+        default:
+            return [...lancamentosFuturos];
 
     }
 
@@ -1338,15 +1277,27 @@ function alterarModoProjecao(modo) {
 
         painel?.classList.remove("hidden");
 
+        atualizarBotoesProjecao();
+
+        renderResumoGeral();
+
+        return;
+
     } else {
 
         painel?.classList.add("hidden");
 
         projecaoSaldo.mesesSelecionados = [];
 
+        atualizarBotoesProjecao();
+
         document
             .querySelectorAll(".chk-projecao-mes")
-            .forEach(chk => chk.checked = false);
+            .forEach(chk => {
+
+                chk.checked = false;
+
+            });
 
     }
 
@@ -1358,27 +1309,47 @@ function alterarModoProjecao(modo) {
 
 function atualizarBotoesProjecao() {
 
-    document.querySelectorAll('.btn-projecao').forEach(btn => {
+    document
+        .querySelectorAll(".btn-projecao")
+        .forEach(btn => {
 
-        btn.classList.remove('ativo');
+            btn.classList.toggle(
+                "ativo",
+                btn.dataset.modo === projecaoSaldo.modo
+            );
 
-        if (btn.dataset.modo === projecaoSaldo.modo) {
-            btn.classList.add('ativo');
-        }
+        });
 
-    });
+    document
+        .querySelectorAll(".chk-projecao-mes")
+        .forEach(chk => {
+
+            chk.checked =
+                projecaoSaldo.mesesSelecionados.includes(
+                    Number(chk.value)
+                );
+
+            chk.onchange = aplicarMesesPersonalizados;
+
+        });
 
 }
 
 function aplicarMesesPersonalizados() {
 
+    if (projecaoSaldo.modo !== "personalizado") return;
+
     const selecionados = [];
 
     document
-        .querySelectorAll(".chk-projecao-mes:checked")
+        .querySelectorAll(".chk-projecao-mes")
         .forEach(chk => {
 
-            selecionados.push(Number(chk.value));
+            if (chk.checked) {
+
+                selecionados.push(Number(chk.value));
+
+            }
 
         });
 
@@ -1401,6 +1372,8 @@ function renderResumoGeral() {
     const resumo = calcularResumoGeral();
 
     container.innerHTML = "";
+
+    atualizarBotoesProjecao();
 
     const cards = [
 
@@ -1425,7 +1398,10 @@ function renderResumoGeral() {
         {
             titulo: "Saldo Projetado",
             valor: resumo.saldoProjetado,
-            classe: resumo.saldoProjetado >= 0 ? "positivo" : "negativo"
+            classe:
+                resumo.saldoProjetado >= 0
+                    ? "positivo"
+                    : "negativo"
         }
 
     ];
@@ -1436,11 +1412,24 @@ function renderResumoGeral() {
 
         div.className = `card-resumo ${card.classe}`;
 
+        const sinal =
+            card.valor > 0
+                ? "▲"
+                : card.valor < 0
+                    ? "▼"
+                    : "■";
+
         div.innerHTML = `
 
-            <div class="titulo">
+            <div class="card-resumo-topo">
 
-                ${card.titulo}
+                <span class="titulo">
+                    ${card.titulo}
+                </span>
+
+                <span class="indicador">
+                    ${sinal}
+                </span>
 
             </div>
 
