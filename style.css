@@ -2112,3 +2112,31 @@ label {
     }
 
 }
+
+/* =====================================================
+   RESUMO GERAL - CABEÇALHO
+===================================================== */
+
+.resumo-header{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    margin-bottom:18px;
+
+}
+
+.resumo-header h2{
+
+    color:#ffffff;
+
+    font-size:32px;
+
+    font-weight:700;
+
+    text-align:center;
+
+}
