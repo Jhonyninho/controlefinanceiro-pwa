@@ -101,6 +101,11 @@
           📊 <span>Resumo Geral</span>
         </button>
 
+        <button class="side-link" onclick="abrirAba('inteligencia')">
+            <span>📊</span>
+            Inteligência Financeira
+        </button>
+
         <button class="side-link" data-tab="historico">
           📜 <span>Histórico</span>
         </button>
@@ -193,7 +198,7 @@
             <div class="resumo-header">
 
                 <div>
-                  
+
                     <h2>Resumo Geral</h2>
 
                 </div>
@@ -256,6 +261,65 @@
             </div>
 
             <div id="cards-resumo-geral" class="cards-resumo-geral"></div>
+
+        </section>
+
+    </main>
+
+    <main id="tab-inteligencia" class="tab-content">
+
+        <section class="inteligencia-financeira">
+
+            <div class="inteligencia-header">
+
+                <h2>Inteligência Financeira</h2>
+
+            </div>
+
+            <div class="cards-inteligencia">
+
+                <div class="card-inteligencia">
+                    <span>Maior gasto do mês</span>
+                    <strong id="ifMaiorGasto">--</strong>
+                </div>
+
+                <div class="card-inteligencia">
+                    <span>Menor gasto do mês</span>
+                    <strong id="ifMenorGasto">--</strong>
+                </div>
+
+                <div class="card-inteligencia">
+                    <span>Categoria que mais consumiu</span>
+                    <strong id="ifCategoriaMaior">--</strong>
+                </div>
+
+                <div class="card-inteligencia">
+                    <span>Categoria que menos consumiu</span>
+                    <strong id="ifCategoriaMenor">--</strong>
+                </div>
+
+                <div class="card-inteligencia">
+                    <span>Total pago no mês</span>
+                    <strong id="ifTotalPago">R$ 0,00</strong>
+                </div>
+
+                <div class="card-inteligencia">
+                    <span>Total recebido no mês</span>
+                    <strong id="ifTotalRecebido">R$ 0,00</strong>
+                </div>
+
+                <div class="card-inteligencia destaque">
+                    <span>Resumo Inteligente</span>
+
+                    <p id="ifResumoIA">
+
+                        Os indicadores serão calculados automaticamente.
+
+                    </p>
+
+                </div>
+
+            </div>
 
         </section>
 
