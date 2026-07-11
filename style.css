@@ -1846,7 +1846,12 @@ label {
 
     display:flex;
     flex-direction:column;
-    gap:20px;
+
+    min-height:calc(100vh - 115px);
+
+    padding:18px;
+
+    gap:18px;
 
 }
 
@@ -1855,24 +1860,30 @@ label {
     display:grid;
 
     grid-template-columns:
-        repeat(auto-fit,minmax(240px,1fr));
+        repeat(auto-fit,minmax(260px,1fr));
 
     gap:18px;
+
+    align-content:start;
+
+    flex:1;
 
 }
 
 .card-resumo{
 
-    background:#ffffff;
+    background:#020617;
+
+    border:1px solid #1e293b;
+
+    border-left:5px solid #ddd;
 
     border-radius:18px;
 
     padding:22px;
 
-    border-left:5px solid #ddd;
-
     box-shadow:
-        0 8px 20px rgba(0,0,0,.08);
+        0 8px 20px rgba(0,0,0,.35);
 
     transition:.25s;
 
@@ -1915,7 +1926,7 @@ label {
 
     font-size:15px;
 
-    color:#64748b;
+    color:#cbd5e1;
 
     font-weight:600;
 
@@ -1936,6 +1947,8 @@ label {
     font-weight:700;
 
     line-height:1.2;
+
+    color:#ffffff;
 
 }
 
@@ -1963,41 +1976,45 @@ label {
 
     gap:10px;
 
-    margin-bottom:20px;
+    margin-bottom:8px;
 
 }
 
 .btn-projecao{
 
-    padding:10px 18px;
+    flex:1;
 
-    border-radius:8px;
+    min-width:140px;
 
-    border:1px solid #d5d5d5;
+    height:42px;
 
-    background:#f7f7f7;
+    border:none;
+
+    border-radius:12px;
+
+    background:#1f2937;
+
+    color:#cbd5e1;
+
+    font-weight:600;
 
     cursor:pointer;
 
     transition:.25s;
 
-    font-weight:600;
-
 }
 
 .btn-projecao:hover{
 
-    background:#ececec;
+    background:#334155;
 
 }
 
 .btn-projecao.ativo{
 
-    background:#1565c0;
+    background:#2563eb;
 
     color:#fff;
-
-    border-color:#1565c0;
 
 }
 
@@ -2048,27 +2065,49 @@ label {
 
 @media (max-width:768px){
 
-    .cards-resumo-geral{
+    .resumo-geral{
 
-        grid-template-columns:1fr;
+        min-height:auto;
 
-    }
-
-    .card-resumo .valor{
-
-        font-size:22px;
+        padding:14px;
 
     }
 
     .projecao-toolbar{
 
-        flex-direction:column;
+        display:grid;
+
+        grid-template-columns:1fr 1fr;
+
+        gap:8px;
 
     }
 
     .btn-projecao{
 
         width:100%;
+
+        min-width:0;
+
+    }
+
+    .cards-resumo-geral{
+
+        grid-template-columns:1fr;
+
+        gap:14px;
+
+    }
+
+    .card-resumo{
+
+        padding:18px;
+
+    }
+
+    .card-resumo .valor{
+
+        font-size:30px;
 
     }
 
