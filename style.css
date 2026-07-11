@@ -1865,21 +1865,25 @@ label {
 
     background:#ffffff;
 
-    border-radius:14px;
+    border-radius:18px;
 
-    padding:18px;
+    padding:22px;
 
-    box-shadow:0 3px 12px rgba(0,0,0,.08);
+    border-left:5px solid #ddd;
+
+    box-shadow:
+        0 8px 20px rgba(0,0,0,.08);
 
     transition:.25s;
-
-    border-left:6px solid #ddd;
 
 }
 
 .card-resumo:hover{
 
-    transform:translateY(-3px);
+    transform:translateY(-4px);
+
+    box-shadow:
+        0 12px 28px rgba(0,0,0,.12);
 
 }
 
@@ -1903,15 +1907,15 @@ label {
 
     align-items:center;
 
-    margin-bottom:14px;
+    margin-bottom:18px;
 
 }
 
 .card-resumo .titulo{
 
-    font-size:14px;
+    font-size:15px;
 
-    color:#666;
+    color:#64748b;
 
     font-weight:600;
 
@@ -1927,9 +1931,11 @@ label {
 
 .card-resumo .valor{
 
-    font-size:28px;
+    font-size:34px;
 
     font-weight:700;
+
+    line-height:1.2;
 
 }
 
