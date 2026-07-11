@@ -121,6 +121,14 @@
     ====================================================== -->
     <main id="tab-resumo" class="tab-content active">
 
+      <!-- ===========================================
+          PROJEÇÃO DO SALDO
+      ============================================ -->
+      
+      <!-- ===========================================
+          CARDS
+      ============================================ -->
+
       <section class="resumo-pagamentos">
 
         <div class="coluna">
@@ -179,9 +187,77 @@
          ABA: RESUMO GERAL
     ====================================================== -->
     <main id="tab-resumo-geral" class="tab-content">
-      <section class="resumo-geral">
-        <div id="cards-resumo-geral" class="cards-resumo-geral"></div>
-      </section>
+
+        <section class="resumo-geral">
+
+            <div class="resumo-header">
+
+                <div>
+                    <h2>Resumo Geral</h2>
+                    <p>Projeção financeira baseada nos lançamentos futuros.</p>
+                </div>
+
+            </div>
+
+            <div class="projecao-toolbar">
+
+                <button class="btn-projecao ativo"
+                    data-modo="todos"
+                    onclick="alterarModoProjecao('todos')">
+                    Todos
+                </button>
+
+                <button class="btn-projecao"
+                    data-modo="mes1"
+                    onclick="alterarModoProjecao('mes1')">
+                    Próximo mês
+                </button>
+
+                <button class="btn-projecao"
+                    data-modo="mes3"
+                    onclick="alterarModoProjecao('mes3')">
+                    3 meses
+                </button>
+
+                <button class="btn-projecao"
+                    data-modo="mes6"
+                    onclick="alterarModoProjecao('mes6')">
+                    6 meses
+                </button>
+
+                <button class="btn-projecao"
+                    data-modo="personalizado"
+                    onclick="alterarModoProjecao('personalizado')">
+                    Personalizado
+                </button>
+
+            </div>
+
+            <div id="painelMesesProjecao" class="hidden">
+
+                <div class="meses-grid">
+
+                    <label><input class="chk-projecao-mes" type="checkbox" value="0"> Janeiro</label>
+                    <label><input class="chk-projecao-mes" type="checkbox" value="1"> Fevereiro</label>
+                    <label><input class="chk-projecao-mes" type="checkbox" value="2"> Março</label>
+                    <label><input class="chk-projecao-mes" type="checkbox" value="3"> Abril</label>
+                    <label><input class="chk-projecao-mes" type="checkbox" value="4"> Maio</label>
+                    <label><input class="chk-projecao-mes" type="checkbox" value="5"> Junho</label>
+                    <label><input class="chk-projecao-mes" type="checkbox" value="6"> Julho</label>
+                    <label><input class="chk-projecao-mes" type="checkbox" value="7"> Agosto</label>
+                    <label><input class="chk-projecao-mes" type="checkbox" value="8"> Setembro</label>
+                    <label><input class="chk-projecao-mes" type="checkbox" value="9"> Outubro</label>
+                    <label><input class="chk-projecao-mes" type="checkbox" value="10"> Novembro</label>
+                    <label><input class="chk-projecao-mes" type="checkbox" value="11"> Dezembro</label>
+
+                </div>
+
+            </div>
+
+            <div id="cards-resumo-geral" class="cards-resumo-geral"></div>
+
+        </section>
+
     </main>
 
     <!-- =====================================================
