@@ -1837,3 +1837,233 @@ label {
 #tabelaLancamentosFuturos tfoot th:last-child{
     text-align:right;
 }
+
+/* =====================================================
+   RESUMO GERAL
+===================================================== */
+
+.resumo-geral{
+
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+
+}
+
+.cards-resumo-geral{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(auto-fit,minmax(240px,1fr));
+
+    gap:18px;
+
+}
+
+.card-resumo{
+
+    background:#ffffff;
+
+    border-radius:14px;
+
+    padding:18px;
+
+    box-shadow:0 3px 12px rgba(0,0,0,.08);
+
+    transition:.25s;
+
+    border-left:6px solid #ddd;
+
+}
+
+.card-resumo:hover{
+
+    transform:translateY(-3px);
+
+}
+
+.card-resumo.positivo{
+
+    border-left-color:#2e7d32;
+
+}
+
+.card-resumo.negativo{
+
+    border-left-color:#c62828;
+
+}
+
+.card-resumo-topo{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:14px;
+
+}
+
+.card-resumo .titulo{
+
+    font-size:14px;
+
+    color:#666;
+
+    font-weight:600;
+
+}
+
+.card-resumo .indicador{
+
+    font-size:22px;
+
+    font-weight:bold;
+
+}
+
+.card-resumo .valor{
+
+    font-size:28px;
+
+    font-weight:700;
+
+}
+
+.card-resumo.positivo .valor{
+
+    color:#2e7d32;
+
+}
+
+.card-resumo.negativo .valor{
+
+    color:#c62828;
+
+}
+
+/* =====================================================
+   PROJEÇÃO
+===================================================== */
+
+.projecao-toolbar{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:10px;
+
+    margin-bottom:20px;
+
+}
+
+.btn-projecao{
+
+    padding:10px 18px;
+
+    border-radius:8px;
+
+    border:1px solid #d5d5d5;
+
+    background:#f7f7f7;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    font-weight:600;
+
+}
+
+.btn-projecao:hover{
+
+    background:#ececec;
+
+}
+
+.btn-projecao.ativo{
+
+    background:#1565c0;
+
+    color:#fff;
+
+    border-color:#1565c0;
+
+}
+
+/* =====================================================
+   PAINEL DE MESES
+===================================================== */
+
+#painelMesesProjecao{
+
+    margin-bottom:18px;
+
+    padding:16px;
+
+    border-radius:12px;
+
+    background:#fafafa;
+
+    border:1px solid #ddd;
+
+}
+
+.meses-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(auto-fit,minmax(150px,1fr));
+
+    gap:10px;
+
+}
+
+.meses-grid label{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    cursor:pointer;
+
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width:768px){
+
+    .cards-resumo-geral{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .card-resumo .valor{
+
+        font-size:22px;
+
+    }
+
+    .projecao-toolbar{
+
+        flex-direction:column;
+
+    }
+
+    .btn-projecao{
+
+        width:100%;
+
+    }
+
+}
