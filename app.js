@@ -1332,8 +1332,22 @@ function alterarModoProjecao(modo) {
 
     projecaoSaldo.modo = modo;
 
-    if (modo !== 'personalizado') {
+    const painel = document.getElementById("painelMesesProjecao");
+
+    if (modo === "personalizado") {
+
+        painel?.classList.remove("hidden");
+
+    } else {
+
+        painel?.classList.add("hidden");
+
         projecaoSaldo.mesesSelecionados = [];
+
+        document
+            .querySelectorAll(".chk-projecao-mes")
+            .forEach(chk => chk.checked = false);
+
     }
 
     atualizarBotoesProjecao();
@@ -1361,7 +1375,7 @@ function aplicarMesesPersonalizados() {
     const selecionados = [];
 
     document
-        .querySelectorAll('.chk-projecao-mes:checked')
+        .querySelectorAll(".chk-projecao-mes:checked")
         .forEach(chk => {
 
             selecionados.push(Number(chk.value));
