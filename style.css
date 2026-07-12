@@ -2140,3 +2140,244 @@ label {
     text-align:center;
 
 }
+
+/* =====================================================
+   INTELIGÊNCIA FINANCEIRA
+===================================================== */
+
+.inteligencia-financeira{
+
+    padding:20px;
+
+}
+
+.inteligencia-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    flex-wrap:wrap;
+
+    gap:16px;
+
+    margin-bottom:24px;
+
+}
+
+.inteligencia-header h2{
+
+    color:#fff;
+
+    font-size:30px;
+
+    font-weight:700;
+
+}
+
+.if-filtros{
+
+    display:flex;
+
+    gap:10px;
+
+    flex-wrap:wrap;
+
+}
+
+.if-filtros select,
+.if-filtros button{
+
+    height:40px;
+
+    padding:0 14px;
+
+    border-radius:10px;
+
+}
+
+.cards-inteligencia{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+
+    gap:16px;
+
+}
+
+.card-inteligencia{
+
+    background:#020617;
+
+    border:1px solid #1e293b;
+
+    border-radius:16px;
+
+    padding:18px;
+
+    box-shadow:0 8px 18px rgba(0,0,0,.30);
+
+}
+
+.card-inteligencia span{
+
+    display:block;
+
+    color:#94a3b8;
+
+    margin-bottom:8px;
+
+    font-size:14px;
+
+}
+
+.card-inteligencia strong{
+
+    color:#fff;
+
+    font-size:24px;
+
+}
+
+.card-inteligencia.destaque{
+
+    grid-column:1/-1;
+
+}
+
+.card-inteligencia.destaque p{
+
+    margin-top:12px;
+
+    color:#cbd5e1;
+
+    line-height:1.6;
+
+}
+
+/* Ranking */
+
+.if-ranking,
+.if-insights,
+.if-comparativo{
+
+    margin-top:28px;
+
+    background:#020617;
+
+    border:1px solid #1e293b;
+
+    border-radius:16px;
+
+    padding:20px;
+
+}
+
+.if-ranking h3,
+.if-insights h3,
+.if-comparativo h3{
+
+    color:#fff;
+
+    margin-bottom:18px;
+
+}
+
+.if-ranking-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:12px 0;
+
+    border-bottom:1px solid rgba(255,255,255,.06);
+
+}
+
+.if-ranking-item:last-child{
+
+    border-bottom:none;
+
+}
+
+.if-ranking-item strong{
+
+    color:#60a5fa;
+
+}
+
+.if-ranking-item small{
+
+    display:block;
+
+    color:#94a3b8;
+
+}
+
+/* Insights */
+
+.if-insight-item{
+
+    padding:14px;
+
+    margin-bottom:10px;
+
+    border-left:4px solid #2563eb;
+
+    background:#0f172a;
+
+    border-radius:10px;
+
+    color:#e2e8f0;
+
+}
+
+.if-insight-item:last-child{
+
+    margin-bottom:0;
+
+}
+
+.if-vazio{
+
+    color:#94a3b8;
+
+    text-align:center;
+
+    padding:24px;
+
+}
+
+/* Mobile */
+
+@media(max-width:768px){
+
+    .inteligencia-header{
+
+        flex-direction:column;
+
+        align-items:stretch;
+
+    }
+
+    .if-filtros{
+
+        display:grid;
+
+        grid-template-columns:1fr;
+
+    }
+
+    .cards-inteligencia{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
