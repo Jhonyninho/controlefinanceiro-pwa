@@ -101,9 +101,8 @@
           📊 <span>Resumo Geral</span>
         </button>
 
-        <button class="side-link" onclick="abrirAba('inteligencia')">
-            <span>📊</span>
-            Inteligência Financeira
+        <button class="side-link" data-tab="inteligencia">
+          📊 <span>Inteligência Financeira</span>
         </button>
 
         <button class="side-link" data-tab="historico">
@@ -274,17 +273,50 @@
 
                 <h2>Inteligência Financeira</h2>
 
+                <div class="if-filtros">
+
+                    <select id="ifAno">
+
+                    </select>
+
+                    <select id="ifMes">
+
+                        <option value="">Todos os meses</option>
+
+                        <option value="0">Janeiro</option>
+                        <option value="1">Fevereiro</option>
+                        <option value="2">Março</option>
+                        <option value="3">Abril</option>
+                        <option value="4">Maio</option>
+                        <option value="5">Junho</option>
+                        <option value="6">Julho</option>
+                        <option value="7">Agosto</option>
+                        <option value="8">Setembro</option>
+                        <option value="9">Outubro</option>
+                        <option value="10">Novembro</option>
+                        <option value="11">Dezembro</option>
+
+                    </select>
+
+                    <button id="btnAtualizarIF">
+
+                        Atualizar
+
+                    </button>
+
+                </div>
+
             </div>
 
             <div class="cards-inteligencia">
 
                 <div class="card-inteligencia">
-                    <span>Maior gasto do mês</span>
+                    <span>Maior gasto</span>
                     <strong id="ifMaiorGasto">--</strong>
                 </div>
 
                 <div class="card-inteligencia">
-                    <span>Menor gasto do mês</span>
+                    <span>Menor gasto</span>
                     <strong id="ifMenorGasto">--</strong>
                 </div>
 
@@ -299,31 +331,129 @@
                 </div>
 
                 <div class="card-inteligencia">
-                    <span>Total pago no mês</span>
+                    <span>Total Pago</span>
                     <strong id="ifTotalPago">R$ 0,00</strong>
                 </div>
 
                 <div class="card-inteligencia">
-                    <span>Total recebido no mês</span>
+                    <span>Total Recebido</span>
                     <strong id="ifTotalRecebido">R$ 0,00</strong>
                 </div>
 
+                <div class="card-inteligencia">
+                    <span>Média diária de gastos</span>
+                    <strong id="ifMediaDiaria">R$ 0,00</strong>
+                </div>
+
+                <div class="card-inteligencia">
+                    <span>Percentual da renda comprometida</span>
+                    <strong id="ifComprometimento">0%</strong>
+                </div>
+
+                <div class="card-inteligencia">
+                    <span>Previsão para o fechamento do mês</span>
+                    <strong id="ifPrevisao">R$ 0,00</strong>
+                </div>
+
                 <div class="card-inteligencia destaque">
+
                     <span>Resumo Inteligente</span>
 
                     <p id="ifResumoIA">
 
-                        Os indicadores serão calculados automaticamente.
+                        Aguardando análise...
 
                     </p>
 
                 </div>
 
-            </div>
+                </div>
 
-        </section>
+                <section class="if-ranking">
 
-    </main>
+                    <h3>Ranking de Categorias</h3>
+
+                    <div id="ifRankingCategorias" class="if-ranking-lista">
+
+                        <div class="if-vazio">
+
+                            Nenhum dado disponível.
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <section class="if-insights">
+
+                    <h3>Insights Financeiros</h3>
+
+                    <div id="ifInsights">
+
+                        <div class="if-vazio">
+
+                            A análise será exibida aqui.
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <section class="if-comparativo">
+
+                    <h3>Comparativo com o Mês Anterior</h3>
+
+                    <div id="ifComparativo">
+
+                        <div class="if-vazio">
+
+                            Nenhuma comparação disponível.
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <section class="if-graficos">
+
+                    <h3>Painel Gráfico</h3>
+
+                    <div class="if-graficos-grid">
+
+                        <div class="grafico-card">
+
+                            <h4>Despesas por Categoria</h4>
+
+                            <canvas id="graficoCategorias"></canvas>
+
+                        </div>
+
+                        <div class="grafico-card">
+
+                            <h4>Receitas x Despesas</h4>
+
+                            <canvas id="graficoReceitasDespesas"></canvas>
+
+                        </div>
+
+                        <div class="grafico-card grafico-full">
+
+                            <h4>Evolução Mensal</h4>
+
+                            <canvas id="graficoEvolucao"></canvas>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                </section>
+
+                </main>
 
     <!-- =====================================================
          ABA: LANÇAMENTOS
@@ -609,6 +739,8 @@
   </section>
 
 </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- JS -->
   <script src="app.js"></script>
