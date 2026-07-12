@@ -2867,45 +2867,107 @@ function calcularScoreFinanceiro(dados) {
 // GRÁFICOS - INTELIGÊNCIA FINANCEIRA
 // ======================================================
 
-function atualizarGraficosIF(dados){
+function atualizarGraficosIF(dados) {
 
-    if(typeof Chart==="undefined") return;
+    if (typeof Chart === "undefined") return;
 
-    if(chartCategorias) chartCategorias.destroy();
-    if(chartReceitasDespesas) chartReceitasDespesas.destroy();
-    if(chartEvolucao) chartEvolucao.destroy();
+    const canvasPizza = document.getElementById("graficoCategorias");
+    const canvasBarra = document.getElementById("graficoReceitasDespesas");
+    const canvasLinha = document.getElementById("graficoEvolucao");
+
+    if (!canvasPizza || !canvasBarra || !canvasLinha) return;
+
+    if (chartCategorias) chartCategorias.destroy();
+    if (chartReceitasDespesas) chartReceitasDespesas.destroy();
+    if (chartEvolucao) chartEvolucao.destroy();
 
     // ==========================
     // CATEGORIAS
     // ==========================
 
-    const categorias = Object.entries(dados.categorias);
+    const listaCategorias = Object.entries(dados.categorias)
+        .sort((a, b) => b[1] - a[1]);
+
+    const cores = [
+
+        "#3b82f6",
+        "#10b981",
+        "#f59e0b",
+        "#ef4444",
+        "#8b5cf6",
+        "#06b6d4",
+        "#f97316",
+        "#84cc16",
+        "#ec4899",
+        "#64748b"
+
+    ];
 
     chartCategorias = new Chart(
-
-        document.getElementById("graficoCategorias"),
-
+        canvasPizza.getContext("2d"),
         {
 
-            type:"doughnut",
+            type: "doughnut",
 
-            data:{
+            data: {
 
-                labels:categorias.map(c=>c[0]),
+                labels: listaCategorias.map(c => c[0]),
 
-                datasets:[{
+                datasets: [{
 
-                    data:categorias.map(c=>c[1])
+                    data: listaCategorias.map(c => c[1]),
+
+                    backgroundColor: cores,
+
+                    borderColor: "#1e293b",
+
+                    borderWidth: 2
 
                 }]
 
             },
 
-            options:{
+            options: {
 
-                responsive:true,
+                responsive: true,
 
-                maintainAspectRatio:false
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+
+                        position: "bottom",
+
+                        labels: {
+
+                            color: "#cbd5e1",
+
+                            boxWidth: 14,
+
+                            padding: 16
+
+                        }
+
+                    },
+
+                    tooltip: {
+
+                        callbacks: {
+
+                            label(context) {
+
+                                return context.label +
+                                    ": " +
+                                    formatMoney(context.raw);
+
+                            }
+
+                        }
+
+                    }
+
+                }
 
             }
 
@@ -2918,36 +2980,94 @@ function atualizarGraficosIF(dados){
     // ==========================
 
     chartReceitasDespesas = new Chart(
-
-        document.getElementById("graficoReceitasDespesas"),
-
+        canvasBarra.getContext("2d"),
         {
 
-            type:"bar",
+            type: "bar",
 
-            data:{
+            data: {
 
-                labels:["Receitas","Despesas"],
+                labels: [
 
-                datasets:[{
+                    "Receitas",
 
-                    data:[
+                    "Despesas"
+
+                ],
+
+                datasets: [{
+
+                    data: [
 
                         dados.totalRecebido,
 
                         dados.totalPago
 
-                    ]
+                    ],
+
+                    backgroundColor: [
+
+                        "#22c55e",
+
+                        "#ef4444"
+
+                    ],
+
+                    borderRadius: 8
 
                 }]
 
             },
 
-            options:{
+            options: {
 
-                responsive:true,
+                responsive: true,
 
-                maintainAspectRatio:false
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+
+                        display: false
+
+                    }
+
+                },
+
+                scales: {
+
+                    y: {
+
+                        beginAtZero: true,
+
+                        ticks: {
+
+                            color: "#cbd5e1",
+
+                            callback: value => formatMoney(value)
+
+                        },
+
+                        grid: {
+
+                            color: "#334155"
+
+                        }
+
+                    },
+
+                    x: {
+
+                        ticks: {
+
+                            color: "#cbd5e1"
+
+                        }
+
+                    }
+
+                }
 
             }
 
@@ -2960,50 +3080,116 @@ function atualizarGraficosIF(dados){
     // ==========================
 
     const meses = [
+
         "Jan","Fev","Mar","Abr",
+
         "Mai","Jun","Jul","Ago",
+
         "Set","Out","Nov","Dez"
+
     ];
 
     const totais = Array(12).fill(0);
 
-    lancamentos.forEach(l=>{
+    const anoSelecionado = Number(document.getElementById("ifAno").value);
 
-        if(String(l[2]).toUpperCase()!=="SAIDA") return;
+    lancamentos.forEach(l => {
+
+        if (String(l[2]).toUpperCase() !== "SAIDA") return;
 
         const data = new Date(formatarDataISO(l[1]));
+
+        if (data.getFullYear() !== anoSelecionado) return;
 
         totais[data.getMonth()] += parseValorBR(l[7]);
 
     });
 
     chartEvolucao = new Chart(
-
-        document.getElementById("graficoEvolucao"),
-
+        canvasLinha.getContext("2d"),
         {
 
-            type:"line",
+            type: "line",
 
-            data:{
+            data: {
 
-                labels:meses,
+                labels: meses,
 
-                datasets:[{
+                datasets: [{
 
-                    label:"Despesas",
+                    label: "Despesas",
 
-                    data:totais
+                    data: totais,
+
+                    borderColor: "#3b82f6",
+
+                    backgroundColor: "rgba(59,130,246,.15)",
+
+                    fill: true,
+
+                    tension: .35,
+
+                    pointRadius: 4,
+
+                    pointHoverRadius: 6
 
                 }]
 
             },
 
-            options:{
+            options: {
 
-                responsive:true,
+                responsive: true,
 
-                maintainAspectRatio:false
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+
+                        labels: {
+
+                            color: "#cbd5e1"
+
+                        }
+
+                    }
+
+                },
+
+                scales: {
+
+                    y: {
+
+                        beginAtZero: true,
+
+                        ticks: {
+
+                            color: "#cbd5e1",
+
+                            callback: value => formatMoney(value)
+
+                        },
+
+                        grid: {
+
+                            color: "#334155"
+
+                        }
+
+                    },
+
+                    x: {
+
+                        ticks: {
+
+                            color: "#cbd5e1"
+
+                        }
+
+                    }
+
+                }
 
             }
 
