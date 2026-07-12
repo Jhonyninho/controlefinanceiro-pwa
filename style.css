@@ -2381,3 +2381,109 @@ label {
     }
 
 }
+
+/* =====================================================
+   GRÁFICOS - INTELIGÊNCIA FINANCEIRA
+===================================================== */
+
+.if-graficos{
+
+    margin-top:28px;
+
+    background:#020617;
+
+    border:1px solid #1e293b;
+
+    border-radius:16px;
+
+    padding:20px;
+
+}
+
+.if-graficos h3{
+
+    color:#fff;
+
+    margin-bottom:18px;
+
+}
+
+.if-graficos-grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:20px;
+
+}
+
+.grafico-card{
+
+    background:#0f172a;
+
+    border:1px solid #1e293b;
+
+    border-radius:14px;
+
+    padding:18px;
+
+    min-height:360px;
+
+    position:relative;
+
+}
+
+.grafico-card h4{
+
+    color:#cbd5e1;
+
+    font-size:15px;
+
+    margin-bottom:15px;
+
+    text-align:center;
+
+}
+
+.grafico-card canvas{
+
+    width:100% !important;
+
+    height:280px !important;
+
+}
+
+.grafico-full{
+
+    grid-column:1 / -1;
+
+}
+
+@media (max-width:768px){
+
+    .if-graficos-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .grafico-full{
+
+        grid-column:auto;
+
+    }
+
+    .grafico-card{
+
+        min-height:320px;
+
+    }
+
+    .grafico-card canvas{
+
+        height:240px !important;
+
+    }
+
+}
