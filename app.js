@@ -40,14 +40,6 @@
 
   };
 
-  // ======================================================
-  // CHARTS - INTELIGÊNCIA FINANCEIRA
-  // ======================================================
-
-  let chartCategorias = null;
-  let chartReceitasDespesas = null;
-  let chartEvolucao = null;
-
 
   // ======================================================
   // HELPERS GERAIS
@@ -2478,7 +2470,7 @@ function renderInteligenciaFinanceira() {
 
     atualizarComparativoFinanceiro();
 
-    atualizarGraficosIF(dados);
+    atualizarDistribuicaoDespesas(dados);
 
 }
 
@@ -2864,337 +2856,146 @@ function calcularScoreFinanceiro(dados) {
 }
 
 // ======================================================
-// GRÁFICOS - INTELIGÊNCIA FINANCEIRA
+// EMOJIS DAS CATEGORIAS
 // ======================================================
 
-function atualizarGraficosIF(dados) {
+const EMOJIS_CATEGORIAS = {
 
-    if (typeof Chart === "undefined") return;
+    "Alimentação":"🍔",
+    "Mercado":"🛒",
+    "Transporte":"🚗",
+    "Combustível":"⛽",
+    "Moradia":"🏠",
+    "Aluguel":"🏠",
+    "Energia":"⚡",
+    "Água":"💧",
+    "Internet":"🌐",
+    "Telefone":"📱",
+    "Farmácia":"💊",
+    "Saúde":"🩺",
+    "Educação":"🎓",
+    "Lazer":"🎮",
+    "Viagem":"✈️",
+    "Investimentos":"📈",
+    "Salário":"💵",
+    "Pix":"💸",
+    "Cartão":"💳"
 
-    const canvasPizza = document.getElementById("graficoCategorias");
-    const canvasBarra = document.getElementById("graficoReceitasDespesas");
-    const canvasLinha = document.getElementById("graficoEvolucao");
+};
 
-    if (!canvasPizza || !canvasBarra || !canvasLinha) return;
+function obterEmojiCategoria(nome){
 
-    if (chartCategorias) chartCategorias.destroy();
-    if (chartReceitasDespesas) chartReceitasDespesas.destroy();
-    if (chartEvolucao) chartEvolucao.destroy();
+    return EMOJIS_CATEGORIAS[nome] || "📦";
 
-    // ==========================
-    // CATEGORIAS
-    // ==========================
+}
 
-    const listaCategorias = Object.entries(dados.categorias)
-        .sort((a, b) => b[1] - a[1]);
+// ======================================================
+// DISTRIBUIÇÃO INTELIGENTE DAS DESPESAS
+// ======================================================
 
-    const cores = [
+function atualizarDistribuicaoDespesas(dados){
 
-        "#3b82f6",
-        "#10b981",
-        "#f59e0b",
-        "#ef4444",
-        "#8b5cf6",
-        "#06b6d4",
-        "#f97316",
-        "#84cc16",
-        "#ec4899",
-        "#64748b"
+    const painel = document.getElementById("ifDistribuicaoCategorias");
 
-    ];
+    if(!painel) return;
 
-    chartCategorias = new Chart(
-        canvasPizza.getContext("2d"),
-        {
+    const categorias = Object.entries(dados.categorias || {})
+        .sort((a,b)=>b[1]-a[1]);
 
-            type: "doughnut",
+    if(!categorias.length){
 
-            data: {
+        painel.innerHTML = `
+            <div class="if-vazio">
+                Nenhuma informação disponível.
+            </div>
+        `;
 
-                labels: listaCategorias.map(c => c[0]),
+        return;
 
-                datasets: [{
+    }
 
-                    data: listaCategorias.map(c => c[1]),
+    const total = categorias.reduce((s,c)=>s+c[1],0);
 
-                    backgroundColor: cores,
+    let html = '<div class="if-distribuicao-lista">';
 
-                    borderColor: "#1e293b",
+    categorias.forEach(([categoria,valor])=>{
 
-                    borderWidth: 2
+        const percentual = total
+            ? (valor/total)*100
+            : 0;
 
-                }]
+        let cor="#22c55e";
 
-            },
+        if(percentual>=35){
 
-            options: {
+            cor="#ef4444";
 
-                responsive: true,
+        }else if(percentual>=20){
 
-                maintainAspectRatio: false,
+            cor="#f59e0b";
 
-                plugins: {
+        }else if(percentual>=10){
 
-                    legend: {
-
-                        position: "bottom",
-
-                        labels: {
-
-                            color: "#cbd5e1",
-
-                            boxWidth: 14,
-
-                            padding: 16
-
-                        }
-
-                    },
-
-                    tooltip: {
-
-                        callbacks: {
-
-                            label(context) {
-
-                                return context.label +
-                                    ": " +
-                                    formatMoney(context.raw);
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
+            cor="#3b82f6";
 
         }
 
-    );
+        html += `
 
-    // ==========================
-    // RECEITAS X DESPESAS
-    // ==========================
+        <div class="if-item">
 
-    chartReceitasDespesas = new Chart(
-        canvasBarra.getContext("2d"),
-        {
+            <div class="if-item-topo">
 
-            type: "bar",
+                <div class="if-item-esquerda">
 
-            data: {
+                    <span class="if-emoji">
 
-                labels: [
+                        ${obterEmojiCategoria(categoria)}
 
-                    "Receitas",
+                    </span>
 
-                    "Despesas"
+                    <span>
 
-                ],
+                        ${categoria}
 
-                datasets: [{
+                    </span>
 
-                    data: [
+                </div>
 
-                        dados.totalRecebido,
+                <div class="if-valor">
 
-                        dados.totalPago
+                    ${formatMoney(valor)}
 
-                    ],
+                </div>
 
-                    backgroundColor: [
+            </div>
 
-                        "#22c55e",
+            <div class="if-barra">
 
-                        "#ef4444"
+                <div
+                    class="if-preenchimento"
+                    style="
+                        width:${percentual.toFixed(1)}%;
+                        background:${cor};
+                    ">
+                </div>
 
-                    ],
+            </div>
 
-                    borderRadius: 8
+            <div class="if-percentual">
 
-                }]
+                ${percentual.toFixed(1)}%
 
-            },
+            </div>
 
-            options: {
+        </div>
 
-                responsive: true,
-
-                maintainAspectRatio: false,
-
-                plugins: {
-
-                    legend: {
-
-                        display: false
-
-                    }
-
-                },
-
-                scales: {
-
-                    y: {
-
-                        beginAtZero: true,
-
-                        ticks: {
-
-                            color: "#cbd5e1",
-
-                            callback: value => formatMoney(value)
-
-                        },
-
-                        grid: {
-
-                            color: "#334155"
-
-                        }
-
-                    },
-
-                    x: {
-
-                        ticks: {
-
-                            color: "#cbd5e1"
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
-    );
-
-    // ==========================
-    // EVOLUÇÃO MENSAL
-    // ==========================
-
-    const meses = [
-
-        "Jan","Fev","Mar","Abr",
-
-        "Mai","Jun","Jul","Ago",
-
-        "Set","Out","Nov","Dez"
-
-    ];
-
-    const totais = Array(12).fill(0);
-
-    const anoSelecionado = Number(document.getElementById("ifAno").value);
-
-    lancamentos.forEach(l => {
-
-        if (String(l[2]).toUpperCase() !== "SAIDA") return;
-
-        const data = new Date(formatarDataISO(l[1]));
-
-        if (data.getFullYear() !== anoSelecionado) return;
-
-        totais[data.getMonth()] += parseValorBR(l[7]);
+        `;
 
     });
 
-    chartEvolucao = new Chart(
-        canvasLinha.getContext("2d"),
-        {
+    html += "</div>";
 
-            type: "line",
-
-            data: {
-
-                labels: meses,
-
-                datasets: [{
-
-                    label: "Despesas",
-
-                    data: totais,
-
-                    borderColor: "#3b82f6",
-
-                    backgroundColor: "rgba(59,130,246,.15)",
-
-                    fill: true,
-
-                    tension: .35,
-
-                    pointRadius: 4,
-
-                    pointHoverRadius: 6
-
-                }]
-
-            },
-
-            options: {
-
-                responsive: true,
-
-                maintainAspectRatio: false,
-
-                plugins: {
-
-                    legend: {
-
-                        labels: {
-
-                            color: "#cbd5e1"
-
-                        }
-
-                    }
-
-                },
-
-                scales: {
-
-                    y: {
-
-                        beginAtZero: true,
-
-                        ticks: {
-
-                            color: "#cbd5e1",
-
-                            callback: value => formatMoney(value)
-
-                        },
-
-                        grid: {
-
-                            color: "#334155"
-
-                        }
-
-                    },
-
-                    x: {
-
-                        ticks: {
-
-                            color: "#cbd5e1"
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
-    );
+    painel.innerHTML = html;
 
 }
