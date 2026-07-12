@@ -40,6 +40,14 @@
 
   };
 
+  // ======================================================
+  // CHARTS - INTELIGÊNCIA FINANCEIRA
+  // ======================================================
+
+  let chartCategorias = null;
+  let chartReceitasDespesas = null;
+  let chartEvolucao = null;
+
 
   // ======================================================
   // HELPERS GERAIS
@@ -645,6 +653,7 @@
       if (document.getElementById('cards-resumo-geral')) {
           renderResumoGeral();
       }
+
   }
 
   // ======================================================
@@ -1742,6 +1751,14 @@
           renderResumoGeral();
         }
 
+        if (alvo === "inteligencia") {
+
+            inicializarFiltrosIF();
+
+            renderInteligenciaFinanceira();
+
+        }
+
         if (alvo === 'historico') {
           carregarLancamentos().then(renderHistoricoLancamentos);
         }
@@ -2252,3 +2269,746 @@
 
       });
   }
+
+  // ======================================================
+// INTELIGÊNCIA FINANCEIRA
+// ======================================================
+
+function calcularInteligenciaFinanceira() {
+
+    const dados = {
+
+        categorias: {},
+
+        maiorGasto: null,
+        menorGasto: null,
+
+        categoriaMaior: "--",
+        categoriaMenor: "--",
+
+        totalPago: 0,
+        totalRecebido: 0,
+
+        mediaDiaria: 0,
+
+        comprometimento: 0,
+
+        previsaoMes: 0,
+
+        resumo: ""
+
+    };
+
+    if (!Array.isArray(lancamentos) || !lancamentos.length) {
+
+        dados.resumo = "Nenhum lançamento encontrado.";
+
+        return dados;
+
+    }
+
+    const selAno = document.getElementById("ifAno");
+    const selMes = document.getElementById("ifMes");
+
+    const anoSelecionado = Number(selAno?.value || new Date().getFullYear());
+    const mesSelecionado = selMes?.value;
+
+    const categorias = {};
+    const diasComMovimento = new Set();
+
+    lancamentos.forEach(l => {
+
+        const data = new Date(formatarDataISO(l[1]));
+
+        if (data.getFullYear() !== anoSelecionado) return;
+
+        if (
+            mesSelecionado !== "" &&
+            data.getMonth() !== Number(mesSelecionado)
+        ) return;
+
+        const tipo = String(l[2]).toUpperCase();
+        const categoria = l[3];
+        const valor = parseValorBR(l[7]);
+
+        diasComMovimento.add(data.getDate());
+
+        if (tipo === "SAIDA") {
+
+            dados.totalPago += valor;
+
+            categorias[categoria] =
+                (categorias[categoria] || 0) + valor;
+
+            if (!dados.maiorGasto || valor > dados.maiorGasto.valor) {
+
+                dados.maiorGasto = {
+                    categoria,
+                    valor
+                };
+
+            }
+
+            if (!dados.menorGasto || valor < dados.menorGasto.valor) {
+
+                dados.menorGasto = {
+                    categoria,
+                    valor
+                };
+
+            }
+
+        }
+
+        if (tipo === "ENTRADA") {
+
+            dados.totalRecebido += valor;
+
+        }
+
+    });
+
+    const listaCategorias = Object.entries(categorias);
+
+    if (listaCategorias.length) {
+
+        listaCategorias.sort((a,b)=>b[1]-a[1]);
+
+        dados.categoriaMaior = listaCategorias[0][0];
+
+        dados.categoriaMenor = listaCategorias[listaCategorias.length-1][0];
+
+    }
+
+    const qtdDias = diasComMovimento.size || 1;
+
+    dados.mediaDiaria = dados.totalPago / qtdDias;
+
+    if (mesSelecionado !== "") {
+
+        const diasNoMes = new Date(
+            anoSelecionado,
+            Number(mesSelecionado)+1,
+            0
+        ).getDate();
+
+        dados.previsaoMes =
+            dados.mediaDiaria * diasNoMes;
+
+    } else {
+
+        dados.previsaoMes = dados.totalPago;
+
+    }
+
+    if (dados.totalRecebido > 0) {
+
+        dados.comprometimento =
+            (dados.totalPago / dados.totalRecebido) * 100;
+
+    }
+
+    dados.resumo =
+        `Foram analisados ${diasComMovimento.size} dias com movimentações. O total de despesas foi ${formatMoney(dados.totalPago)} e o total de receitas foi ${formatMoney(dados.totalRecebido)}.`;
+
+    // IMPORTANTE
+    dados.categorias = categorias;
+
+    return dados;
+
+}
+
+// ======================================================
+// RENDERIZAÇÃO - INTELIGÊNCIA FINANCEIRA
+// ======================================================
+
+function renderInteligenciaFinanceira() {
+
+    const dados = calcularInteligenciaFinanceira();
+    const score = calcularScoreFinanceiro(dados);
+
+    const maior = document.getElementById("ifMaiorGasto");
+    const menor = document.getElementById("ifMenorGasto");
+    const catMaior = document.getElementById("ifCategoriaMaior");
+    const catMenor = document.getElementById("ifCategoriaMenor");
+    const pago = document.getElementById("ifTotalPago");
+    const recebido = document.getElementById("ifTotalRecebido");
+    const media = document.getElementById("ifMediaDiaria");
+    const comprometimento = document.getElementById("ifComprometimento");
+    const previsao = document.getElementById("ifPrevisao");
+    const resumo = document.getElementById("ifResumoIA");
+
+    if (!maior) return;
+
+    maior.textContent = dados.maiorGasto
+        ? `${dados.maiorGasto.categoria} - ${formatMoney(dados.maiorGasto.valor)}`
+        : "--";
+
+    menor.textContent = dados.menorGasto
+        ? `${dados.menorGasto.categoria} - ${formatMoney(dados.menorGasto.valor)}`
+        : "--";
+
+    catMaior.textContent = dados.categoriaMaior;
+    catMenor.textContent = dados.categoriaMenor;
+
+    pago.textContent = formatMoney(dados.totalPago);
+    recebido.textContent = formatMoney(dados.totalRecebido);
+    media.textContent = formatMoney(dados.mediaDiaria);
+
+    comprometimento.textContent =
+        dados.comprometimento.toFixed(1) + "%";
+
+    previsao.textContent =
+        formatMoney(dados.previsaoMes);
+
+    if (resumo) {
+
+        resumo.innerHTML = `
+            <strong>Score Financeiro:</strong>
+            ${score.score}/100 - ${score.classificacao}
+            <br><br>
+            ${dados.resumo}
+        `;
+
+    }
+
+    atualizarRankingCategorias(dados.categorias);
+
+    atualizarInsightsFinanceiros(dados);
+
+    atualizarComparativoFinanceiro();
+
+    atualizarGraficosIF(dados);
+
+}
+
+// ======================================================
+// FILTROS - INTELIGÊNCIA FINANCEIRA
+// ======================================================
+
+function inicializarFiltrosIF() {
+
+    const selAno = document.getElementById("ifAno");
+    const btn = document.getElementById("btnAtualizarIF");
+
+    if (!selAno || !btn) return;
+
+    if (selAno.options.length === 0) {
+
+        const anoAtual = new Date().getFullYear();
+
+        for (let a = anoAtual - 5; a <= anoAtual + 1; a++) {
+
+            selAno.innerHTML += `
+                <option value="${a}">
+                    ${a}
+                </option>
+            `;
+
+        }
+
+        selAno.value = anoAtual;
+
+    }
+
+    btn.onclick = () => {
+
+        renderInteligenciaFinanceira();
+
+    };
+
+}
+
+// ======================================================
+// RANKING DE CATEGORIAS
+// ======================================================
+
+function atualizarRankingCategorias(categorias) {
+
+    const div = document.getElementById("ifRankingCategorias");
+
+    if (!div) return;
+
+    div.innerHTML = "";
+
+    const lista = Object.entries(categorias)
+        .sort((a, b) => b[1] - a[1]);
+
+    if (!lista.length) {
+
+        div.innerHTML = `
+            <div class="if-vazio">
+                Nenhum dado encontrado.
+            </div>
+        `;
+
+        return;
+
+    }
+
+    const total = lista.reduce((s, c) => s + c[1], 0);
+
+    lista.slice(0, 10).forEach((item, indice) => {
+
+        const percentual = total > 0
+            ? (item[1] / total) * 100
+            : 0;
+
+        div.innerHTML += `
+
+        <div class="if-ranking-item">
+
+            <div>
+
+                <strong>${indice + 1}º</strong>
+
+                ${item[0]}
+
+            </div>
+
+            <div>
+
+                ${formatMoney(item[1])}
+
+                <small>
+
+                    ${percentual.toFixed(1)}%
+
+                </small>
+
+            </div>
+
+        </div>
+
+        `;
+
+    });
+
+}
+
+// ======================================================
+// INSIGHTS FINANCEIROS
+// ======================================================
+
+function atualizarInsightsFinanceiros(dados){
+
+    const div = document.getElementById("ifInsights");
+
+    if(!div) return;
+
+    div.innerHTML = "";
+
+    const insights = [];
+
+    if(dados.comprometimento >= 90){
+
+        insights.push(
+            "⚠️ Suas despesas representam mais de 90% da sua renda."
+        );
+
+    }else if(dados.comprometimento >= 70){
+
+        insights.push(
+            "⚠️ Mais de 70% da sua renda já está comprometida."
+        );
+
+    }else{
+
+        insights.push(
+            "✅ Seu comprometimento financeiro está dentro de uma faixa saudável."
+        );
+
+    }
+
+    if(dados.categoriaMaior !== "--"){
+
+        insights.push(
+            `📌 A categoria que mais consumiu recursos foi ${dados.categoriaMaior}.`
+        );
+
+    }
+
+    if(dados.maiorGasto){
+
+        insights.push(
+            `💸 O maior gasto individual foi de ${formatMoney(dados.maiorGasto.valor)}.`
+        );
+
+    }
+
+    if(dados.mediaDiaria > 0){
+
+        insights.push(
+            `📅 Sua média diária de despesas é ${formatMoney(dados.mediaDiaria)}.`
+        );
+
+    }
+
+    insights.forEach(texto=>{
+
+        div.innerHTML += `
+
+        <div class="if-insight-item">
+
+            ${texto}
+
+        </div>
+
+        `;
+
+    });
+
+}
+
+// ======================================================
+// COMPARATIVO COM O MÊS ANTERIOR
+// ======================================================
+
+function atualizarComparativoFinanceiro() {
+
+    const div = document.getElementById("ifComparativo");
+
+    if (!div) return;
+
+    div.innerHTML = "";
+
+    const selAno = Number(document.getElementById("ifAno").value);
+
+    const selMes = document.getElementById("ifMes").value;
+
+    if (selMes === "") {
+
+        div.innerHTML = `
+            <div class="if-vazio">
+                Selecione um mês para visualizar o comparativo.
+            </div>
+        `;
+
+        return;
+
+    }
+
+    const mesAtual = Number(selMes);
+
+    if (mesAtual === 0) {
+
+        div.innerHTML = `
+            <div class="if-vazio">
+                Janeiro não possui mês anterior para comparação.
+            </div>
+        `;
+
+        return;
+
+    }
+
+    const atual = {};
+    const anterior = {};
+
+    lancamentos.forEach(l => {
+
+        const data = new Date(formatarDataISO(l[1]));
+
+        if (data.getFullYear() !== selAno) return;
+
+        const tipo = String(l[2]).toUpperCase();
+
+        if (tipo !== "SAIDA") return;
+
+        const categoria = l[3];
+
+        const valor = parseValorBR(l[7]);
+
+        if (data.getMonth() === mesAtual) {
+
+            atual[categoria] =
+                (atual[categoria] || 0) + valor;
+
+        }
+
+        if (data.getMonth() === mesAtual - 1) {
+
+            anterior[categoria] =
+                (anterior[categoria] || 0) + valor;
+
+        }
+
+    });
+
+    const categorias = new Set([
+        ...Object.keys(atual),
+        ...Object.keys(anterior)
+    ]);
+
+    categorias.forEach(cat => {
+
+        const valorAtual = atual[cat] || 0;
+
+        const valorAnterior = anterior[cat] || 0;
+
+        let texto;
+
+        if (valorAnterior === 0 && valorAtual > 0) {
+
+            texto = `🆕 ${cat}: nova despesa (${formatMoney(valorAtual)})`;
+
+        }
+
+        else if (valorAtual > valorAnterior) {
+
+            const perc =
+                ((valorAtual - valorAnterior) /
+                valorAnterior) * 100;
+
+            texto =
+                `🔺 ${cat}: +${perc.toFixed(1)}%`;
+
+        }
+
+        else if (valorAtual < valorAnterior) {
+
+            const perc =
+                ((valorAnterior - valorAtual) /
+                valorAnterior) * 100;
+
+            texto =
+                `🔻 ${cat}: -${perc.toFixed(1)}%`;
+
+        }
+
+        else {
+
+            texto =
+                `➡️ ${cat}: estável`;
+
+        }
+
+        div.innerHTML += `
+
+            <div class="if-insight-item">
+
+                ${texto}
+
+            </div>
+
+        `;
+
+    });
+
+}
+
+// ======================================================
+// SCORE FINANCEIRO
+// ======================================================
+
+function calcularScoreFinanceiro(dados) {
+
+    let score = 100;
+
+    if (dados.comprometimento > 90) {
+
+        score -= 40;
+
+    } else if (dados.comprometimento > 75) {
+
+        score -= 25;
+
+    } else if (dados.comprometimento > 60) {
+
+        score -= 10;
+
+    }
+
+    if (dados.previsaoMes > dados.totalRecebido) {
+
+        score -= 20;
+
+    }
+
+    if (dados.totalRecebido <= 0) {
+
+        score = 0;
+
+    }
+
+    score = Math.max(0, Math.min(100, Math.round(score)));
+
+    let classificacao = "";
+
+    if (score >= 90) {
+
+        classificacao = "Excelente";
+
+    } else if (score >= 75) {
+
+        classificacao = "Bom";
+
+    } else if (score >= 50) {
+
+        classificacao = "Atenção";
+
+    } else {
+
+        classificacao = "Crítico";
+
+    }
+
+    return {
+
+        score,
+
+        classificacao
+
+    };
+
+}
+
+// ======================================================
+// GRÁFICOS - INTELIGÊNCIA FINANCEIRA
+// ======================================================
+
+function atualizarGraficosIF(dados){
+
+    if(typeof Chart==="undefined") return;
+
+    if(chartCategorias) chartCategorias.destroy();
+    if(chartReceitasDespesas) chartReceitasDespesas.destroy();
+    if(chartEvolucao) chartEvolucao.destroy();
+
+    // ==========================
+    // CATEGORIAS
+    // ==========================
+
+    const categorias = Object.entries(dados.categorias);
+
+    chartCategorias = new Chart(
+
+        document.getElementById("graficoCategorias"),
+
+        {
+
+            type:"doughnut",
+
+            data:{
+
+                labels:categorias.map(c=>c[0]),
+
+                datasets:[{
+
+                    data:categorias.map(c=>c[1])
+
+                }]
+
+            },
+
+            options:{
+
+                responsive:true,
+
+                maintainAspectRatio:false
+
+            }
+
+        }
+
+    );
+
+    // ==========================
+    // RECEITAS X DESPESAS
+    // ==========================
+
+    chartReceitasDespesas = new Chart(
+
+        document.getElementById("graficoReceitasDespesas"),
+
+        {
+
+            type:"bar",
+
+            data:{
+
+                labels:["Receitas","Despesas"],
+
+                datasets:[{
+
+                    data:[
+
+                        dados.totalRecebido,
+
+                        dados.totalPago
+
+                    ]
+
+                }]
+
+            },
+
+            options:{
+
+                responsive:true,
+
+                maintainAspectRatio:false
+
+            }
+
+        }
+
+    );
+
+    // ==========================
+    // EVOLUÇÃO MENSAL
+    // ==========================
+
+    const meses = [
+        "Jan","Fev","Mar","Abr",
+        "Mai","Jun","Jul","Ago",
+        "Set","Out","Nov","Dez"
+    ];
+
+    const totais = Array(12).fill(0);
+
+    lancamentos.forEach(l=>{
+
+        if(String(l[2]).toUpperCase()!=="SAIDA") return;
+
+        const data = new Date(formatarDataISO(l[1]));
+
+        totais[data.getMonth()] += parseValorBR(l[7]);
+
+    });
+
+    chartEvolucao = new Chart(
+
+        document.getElementById("graficoEvolucao"),
+
+        {
+
+            type:"line",
+
+            data:{
+
+                labels:meses,
+
+                datasets:[{
+
+                    label:"Despesas",
+
+                    data:totais
+
+                }]
+
+            },
+
+            options:{
+
+                responsive:true,
+
+                maintainAspectRatio:false
+
+            }
+
+        }
+
+    );
+
+}
