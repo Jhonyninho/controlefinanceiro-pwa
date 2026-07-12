@@ -2464,13 +2464,11 @@ function renderInteligenciaFinanceira() {
 
     }
 
-    atualizarRankingCategorias(dados.categorias);
+    atualizarDistribuicaoDespesas(dados);
 
     atualizarInsightsFinanceiros(dados);
 
     atualizarComparativoFinanceiro();
-
-    atualizarDistribuicaoDespesas(dados);
 
 }
 
@@ -2508,73 +2506,6 @@ function inicializarFiltrosIF() {
         renderInteligenciaFinanceira();
 
     };
-
-}
-
-// ======================================================
-// RANKING DE CATEGORIAS
-// ======================================================
-
-function atualizarRankingCategorias(categorias) {
-
-    const div = document.getElementById("ifRankingCategorias");
-
-    if (!div) return;
-
-    div.innerHTML = "";
-
-    const lista = Object.entries(categorias)
-        .sort((a, b) => b[1] - a[1]);
-
-    if (!lista.length) {
-
-        div.innerHTML = `
-            <div class="if-vazio">
-                Nenhum dado encontrado.
-            </div>
-        `;
-
-        return;
-
-    }
-
-    const total = lista.reduce((s, c) => s + c[1], 0);
-
-    lista.slice(0, 10).forEach((item, indice) => {
-
-        const percentual = total > 0
-            ? (item[1] / total) * 100
-            : 0;
-
-        div.innerHTML += `
-
-        <div class="if-ranking-item">
-
-            <div>
-
-                <strong>${indice + 1}º</strong>
-
-                ${item[0]}
-
-            </div>
-
-            <div>
-
-                ${formatMoney(item[1])}
-
-                <small>
-
-                    ${percentual.toFixed(1)}%
-
-                </small>
-
-            </div>
-
-        </div>
-
-        `;
-
-    });
 
 }
 
