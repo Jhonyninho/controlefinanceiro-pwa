@@ -227,6 +227,8 @@
 
     renderLancamentosFuturos();
 
+
+
     // ==================================================
     // DRE – INICIALIZAÇÃO CORRETA
     // ==================================================
@@ -734,6 +736,117 @@
               });
 
       }
+
+      renderDashboardUltimosLancamentos();  
+
+      renderDashboardGraficos();
+
+  }
+
+  // ======================================================
+  // DASHBOARD - ÚLTIMOS LANÇAMENTOS
+  // ======================================================
+  function renderDashboardUltimosLancamentos() {
+
+      const container = document.getElementById("dashboardUltimos");
+
+      if (!container) return;
+
+      container.innerHTML = "";
+
+      const titulo = document.createElement("h3");
+
+      titulo.textContent = "Últimos Lançamentos";
+
+      container.appendChild(titulo);
+
+      const lista = document.createElement("div");
+
+      lista.className = "dashboard-lista";
+
+      const ultimos = [...lancamentos]
+          .sort((a, b) =>
+              new Date(formatarDataISO(b[1])) -
+              new Date(formatarDataISO(a[1]))
+          )
+          .slice(0, 8);
+
+      if (!ultimos.length) {
+
+          lista.innerHTML = `
+              <div class="dashboard-item">
+                  Nenhum lançamento encontrado.
+              </div>
+          `;
+
+          container.appendChild(lista);
+
+          return;
+
+      }
+
+      ultimos.forEach(l => {
+
+          const tipo = String(l[2]).toUpperCase();
+
+          const valor = parseValorBR(l[7]);
+
+          const item = document.createElement("div");
+
+          item.className =
+              `dashboard-item ${tipo === "ENTRADA" ? "entrada" : "saida"}`;
+
+          item.innerHTML = `
+
+              <div>
+
+                  <div class="descricao">
+
+                      ${l[8] || l[4]}
+
+                  </div>
+
+                  <div class="categoria">
+
+                      ${formatarDataBR(l[1])}
+                      •
+                      ${l[3]}
+                  </div>
+
+              </div>
+
+              <div class="valor">
+
+                  ${tipo === "ENTRADA" ? "+" : "-"}
+                  ${formatMoney(valor)}
+
+              </div>
+
+          `;
+
+          lista.appendChild(item);
+
+      });
+
+      container.appendChild(lista);
+
+  }
+
+  // ======================================================
+  // DASHBOARD - ÁREA DE GRÁFICOS (PREPARAÇÃO)
+  // ======================================================
+  function renderDashboardGraficos() {
+
+      const grafico1 = document.getElementById("graficoReceitasDespesas");
+      const grafico2 = document.getElementById("graficoCategorias");
+
+      if (!grafico1 || !grafico2) return;
+
+      const ctx1 = grafico1.getContext("2d");
+      const ctx2 = grafico2.getContext("2d");
+
+      ctx1.clearRect(0, 0, grafico1.width, grafico1.height);
+      ctx2.clearRect(0, 0, grafico2.width, grafico2.height);
 
   }
 
