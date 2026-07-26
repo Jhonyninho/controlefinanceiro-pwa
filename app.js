@@ -2432,8 +2432,6 @@ O comprometimento financeiro previsto
 
 function renderInteligenciaFinanceira() {
 
-    function renderInteligenciaFinanceira() {
-
     const totalPago = document.getElementById("ifTotalPago");
     const totalRecebido = document.getElementById("ifTotalRecebido");
     const saldoAtual = document.getElementById("ifMediaDiaria");
