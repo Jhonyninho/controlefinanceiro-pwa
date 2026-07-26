@@ -2281,11 +2281,14 @@ function calcularInteligenciaFinanceira() {
         totalPago: 0,
         totalRecebido: 0,
 
-        mediaDiaria: 0,
+        aPagar: 0,
+        aReceber: 0,
+
+        despesaPrevista: 0,
+        receitaPrevista: 0,
+        resultadoPrevisto: 0,
 
         comprometimento: 0,
-
-        previsaoMes: 0,
 
         resumo: ""
 
@@ -2372,27 +2375,6 @@ function calcularInteligenciaFinanceira() {
 
     }
 
-    const qtdDias = diasComMovimento.size || 1;
-
-    dados.mediaDiaria = dados.totalPago / qtdDias;
-
-    if (mesSelecionado !== "") {
-
-        const diasNoMes = new Date(
-            anoSelecionado,
-            Number(mesSelecionado)+1,
-            0
-        ).getDate();
-
-        dados.previsaoMes =
-            dados.mediaDiaria * diasNoMes;
-
-    } else {
-
-        dados.previsaoMes = dados.totalPago;
-
-    }
-
     if (dados.totalRecebido > 0) {
 
         dados.comprometimento =
@@ -2400,8 +2382,51 @@ function calcularInteligenciaFinanceira() {
 
     }
 
+    // ======================================================
+// LANÇAMENTOS FUTUROS
+// ======================================================
+
+const futuros = obterLancamentosProjetados();
+
+futuros.forEach(l => {
+
+    const data = new Date(formatarDataISO(l[1]));
+
+    if (data.getFullYear() !== anoSelecionado) return;
+
+    if (
+        mesSelecionado !== "" &&
+        data.getMonth() !== Number(mesSelecionado)
+    ) return;
+
+    const tipo = String(l[2]).toUpperCase();
+
+    const valor = parseValorBR(l[7]);
+
+    if (tipo === "ENTRADA") {
+
+        dados.aReceber += valor;
+
+    } else {
+
+        dados.aPagar += valor;
+
+    }
+
+});
+
+dados.receitaPrevista =
+    dados.totalRecebido + dados.aReceber;
+
+dados.despesaPrevista =
+    dados.totalPago + dados.aPagar;
+
+dados.resultadoPrevisto =
+    dados.receitaPrevista -
+    dados.despesaPrevista;
+
     dados.resumo =
-        `Foram analisados ${diasComMovimento.size} dias com movimentações. O total de despesas foi ${formatMoney(dados.totalPago)} e o total de receitas foi ${formatMoney(dados.totalRecebido)}.`;
+    `Até o momento foram pagos ${formatMoney(dados.totalPago)} e recebidos ${formatMoney(dados.totalRecebido)}. Considerando os lançamentos futuros, o fechamento previsto é de ${formatMoney(dados.resultadoPrevisto)}.`;
 
     // IMPORTANTE
     dados.categorias = categorias;
@@ -2447,11 +2472,11 @@ function renderInteligenciaFinanceira() {
     recebido.textContent = formatMoney(dados.totalRecebido);
     media.textContent = formatMoney(dados.mediaDiaria);
 
-    comprometimento.textContent =
-        dados.comprometimento.toFixed(1) + "%";
+    media.textContent =
+        formatMoney(dados.aPagar);
 
     previsao.textContent =
-        formatMoney(dados.previsaoMes);
+        formatMoney(dados.resultadoPrevisto);
 
     if (resumo) {
 
@@ -2742,7 +2767,7 @@ function calcularScoreFinanceiro(dados) {
 
     }
 
-    if (dados.previsaoMes > dados.totalRecebido) {
+    if (dados.resultadoPrevisto < 0) {
 
         score -= 20;
 
