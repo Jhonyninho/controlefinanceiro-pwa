@@ -663,89 +663,67 @@
   // ======================================================
   function renderDashboardUltimosLancamentos() {
 
-      const container = document.getElementById("dashboardUltimos");
+    // Durante a refatoração, os últimos lançamentos
+    // passam a ser exibidos no Resumo Geral.
 
-      if (!container) return;
+    const container =
+        document.getElementById("resumoUltimos");
 
-      container.innerHTML = "";
+    if (!container) return;
 
-      const titulo = document.createElement("h3");
+    container.innerHTML = "";
 
-      titulo.textContent = "Últimos Lançamentos";
+    const lancamentos = [...dadosLancamentos]
+        .sort((a, b) =>
+            new Date(b.data) - new Date(a.data)
+        )
+        .slice(0, 10);
 
-      container.appendChild(titulo);
+    if (!lancamentos.length) {
 
-      const lista = document.createElement("div");
+        container.innerHTML = `
+            <div class="sem-registros">
+                Nenhum lançamento encontrado.
+            </div>
+        `;
 
-      lista.className = "dashboard-lista";
+        return;
+    }
 
-      const ultimos = [...lancamentos]
-          .sort((a, b) =>
-              new Date(formatarDataISO(b[1])) -
-              new Date(formatarDataISO(a[1]))
-          )
-          .slice(0, 8);
+    lancamentos.forEach(item => {
 
-      if (!ultimos.length) {
+        const div = document.createElement("div");
 
-          lista.innerHTML = `
-              <div class="dashboard-item">
-                  Nenhum lançamento encontrado.
-              </div>
-          `;
+        div.className =
+            `dashboard-item ${item.tipo}`;
 
-          container.appendChild(lista);
+        div.innerHTML = `
 
-          return;
+            <div>
 
-      }
+                <div class="descricao">
+                    ${item.descricao}
+                </div>
 
-      ultimos.forEach(l => {
+                <div class="categoria">
+                    ${item.categoria}
+                </div>
 
-          const tipo = String(l[2]).toUpperCase();
+            </div>
 
-          const valor = parseValorBR(l[7]);
+            <div class="valor">
 
-          const item = document.createElement("div");
+                ${formatarMoeda(item.valor)}
 
-          item.className =
-              `dashboard-item ${tipo === "ENTRADA" ? "entrada" : "saida"}`;
+            </div>
 
-          item.innerHTML = `
+        `;
 
-              <div>
+        container.appendChild(div);
 
-                  <div class="descricao">
+    });
 
-                      ${l[8] || l[4]}
-
-                  </div>
-
-                  <div class="categoria">
-
-                      ${formatarDataBR(l[1])}
-                      •
-                      ${l[3]}
-                  </div>
-
-              </div>
-
-              <div class="valor">
-
-                  ${tipo === "ENTRADA" ? "+" : "-"}
-                  ${formatMoney(valor)}
-
-              </div>
-
-          `;
-
-          lista.appendChild(item);
-
-      });
-
-      container.appendChild(lista);
-
-  }
+}
 
   // ======================================================
   // LANÇAMENTOS FUTUROS – RENDER (ENTRADA + SAÍDA)
