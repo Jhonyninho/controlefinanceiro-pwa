@@ -2589,13 +2589,51 @@ label {
 
 }
 
-.dashboard-ultimos{
+/* =====================================================
+   RESUMO GERAL → ÚLTIMOS LANÇAMENTOS
+===================================================== */
 
-    margin:20px;
+.resumo-ultimos{
+
+    margin-top:30px;
 
 }
 
-.dashboard-lista{
+.resumo-ultimos-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-end;
+
+    margin-bottom:18px;
+
+    flex-wrap:wrap;
+
+    gap:8px;
+
+}
+
+.resumo-ultimos-header h3{
+
+    color:#ffffff;
+
+    font-size:24px;
+
+    font-weight:700;
+
+}
+
+.resumo-ultimos-header span{
+
+    color:#94a3b8;
+
+    font-size:14px;
+
+}
+
+.resumo-ultimos-lista{
 
     display:flex;
 
@@ -2664,6 +2702,16 @@ label {
 .dashboard-item.saida .valor{
 
     color:#c62828;
+
+}
+
+.sem-registros{
+
+    padding:30px;
+
+    text-align:center;
+
+    color:#94a3b8;
 
 }
 
