@@ -2873,7 +2873,11 @@ function atualizarDistribuicaoDespesas(dados){
 
         html += `
 
-        <div class="if-item">
+        <div
+            class="if-item"
+            onclick="abrirDetalheCategoria('${categoria}')"
+            style="cursor:pointer;"
+        >
 
             <div class="if-item-topo">
 
@@ -2928,5 +2932,129 @@ function atualizarDistribuicaoDespesas(dados){
     html += "</div>";
 
     painel.innerHTML = html;
+
+}
+
+// ======================================================
+// DETALHAMENTO DA CATEGORIA
+// ======================================================
+
+function abrirDetalheCategoria(categoria){
+
+    const ano = Number(document.getElementById("ifAno").value);
+
+    const mes = document.getElementById("ifMes").value;
+
+    let registros = lancamentos.filter(l=>{
+
+        if(String(l[2]).toUpperCase()!=="SAIDA")
+            return false;
+
+        if(l[3]!==categoria)
+            return false;
+
+        const data = new Date(formatarDataISO(l[1]));
+
+        if(data.getFullYear()!=ano)
+            return false;
+
+        if(mes!=="" && data.getMonth()!=Number(mes))
+            return false;
+
+        return true;
+
+    });
+
+    registros.sort((a,b)=>
+        new Date(formatarDataISO(a[1]))-
+        new Date(formatarDataISO(b[1]))
+    );
+
+    let html=`
+
+        <div class="modal-edicao">
+
+            <div class="modal-overlay"
+                 onclick="this.parentElement.remove()"></div>
+
+            <div class="modal-box">
+
+                <h3>
+
+                    ${obterEmojiCategoria(categoria)}
+                    ${categoria}
+
+                </h3>
+
+    `;
+
+    if(!registros.length){
+
+        html+=`
+
+            <p>Nenhum lançamento encontrado.</p>
+
+        `;
+
+    }else{
+
+        registros.forEach(l=>{
+
+            html+=`
+
+                <div class="modal-item">
+
+                    <span>
+
+                        ${l[1]}
+
+                    </span>
+
+                    <span>
+
+                        ${l[8]||""}
+
+                    </span>
+
+                    <strong>
+
+                        ${formatMoney(parseValorBR(l[7]))}
+
+                    </strong>
+
+                </div>
+
+            `;
+
+        });
+
+    }
+
+    html+=`
+
+            <div class="modal-acoes">
+
+                <button
+                    onclick="this.closest('.modal-edicao').remove()">
+
+                    Fechar
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    `;
+
+    document.body.insertAdjacentHTML(
+
+        "beforeend",
+
+        html
+
+    );
 
 }
