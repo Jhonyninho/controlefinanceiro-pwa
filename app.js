@@ -739,7 +739,6 @@
 
       renderDashboardUltimosLancamentos();  
 
-      renderDashboardGraficos();
 
   }
 
@@ -829,24 +828,6 @@
       });
 
       container.appendChild(lista);
-
-  }
-
-  // ======================================================
-  // DASHBOARD - ÁREA DE GRÁFICOS (PREPARAÇÃO)
-  // ======================================================
-  function renderDashboardGraficos() {
-
-      const grafico1 = document.getElementById("graficoReceitasDespesas");
-      const grafico2 = document.getElementById("graficoCategorias");
-
-      if (!grafico1 || !grafico2) return;
-
-      const ctx1 = grafico1.getContext("2d");
-      const ctx2 = grafico2.getContext("2d");
-
-      ctx1.clearRect(0, 0, grafico1.width, grafico1.height);
-      ctx2.clearRect(0, 0, grafico2.width, grafico2.height);
 
   }
 
