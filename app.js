@@ -3006,7 +3006,7 @@ function abrirDetalheCategoria(categoria){
 
                     <span>
 
-                        ${l[1]}
+                        ${formatarDataBR(l[1])}
 
                     </span>
 
