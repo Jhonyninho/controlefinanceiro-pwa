@@ -2797,7 +2797,6 @@ const EMOJIS_CATEGORIAS = {
 
     "Transporte": "🚗",
     "Combustível": "⛽",
-    "Veículo": "🚘",
     "Veiculo": "🚘",
 
     "Moradia": "🏠",
