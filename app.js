@@ -2432,45 +2432,19 @@ O comprometimento financeiro previsto
 
 function renderInteligenciaFinanceira() {
 
-    const dados = calcularInteligenciaFinanceira();
-
-    const score = calcularScoreFinanceiro(dados);
-
-    // ==================================================
-    // ELEMENTOS
-    // ==================================================
-
-    const maior = document.getElementById("ifMaiorGasto");
-    const menor = document.getElementById("ifMenorGasto");
-
-    const catMaior = document.getElementById("ifCategoriaMaior");
-    const catMenor = document.getElementById("ifCategoriaMenor");
+    function renderInteligenciaFinanceira() {
 
     const totalPago = document.getElementById("ifTotalPago");
     const totalRecebido = document.getElementById("ifTotalRecebido");
-
     const saldoAtual = document.getElementById("ifMediaDiaria");
+    const aReceber = document.getElementById("ifAReceber");
+    const aPagar = document.getElementById("ifAPagar");
     const comprometimento = document.getElementById("ifComprometimento");
     const saldoProjetado = document.getElementById("ifPrevisao");
-
     const resumo = document.getElementById("ifResumoIA");
 
-    if (!maior) return;
-
-    // ==================================================
-    // MAIOR / MENOR GASTO
-    // ==================================================
-
-    maior.textContent = dados.maiorGasto
-        ? `${dados.maiorGasto.categoria} - ${formatMoney(dados.maiorGasto.valor)}`
-        : "--";
-
-    menor.textContent = dados.menorGasto
-        ? `${dados.menorGasto.categoria} - ${formatMoney(dados.menorGasto.valor)}`
-        : "--";
-
-    catMaior.textContent = dados.categoriaMaior;
-    catMenor.textContent = dados.categoriaMenor;
+    const dados = calcularInteligenciaFinanceira();
+    const score = calcularScoreFinanceiro(dados);
 
     // ==================================================
     // INDICADORES
