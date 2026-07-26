@@ -121,41 +121,73 @@
     </aside>
     
     <!-- =====================================================
-         ABA: RESUMO
-    ====================================================== -->
+     ABA: RESUMO
+    ===================================================== -->
     <main id="tab-resumo" class="tab-content active">
 
-      <!-- ===========================================
-          PROJEÇÃO DO SALDO
-      ============================================ -->
-      
-      <!-- ===========================================
-          CARDS
-      ============================================ -->
+        <!-- CABEÇALHO -->
+        <section class="dashboard-header">
 
-      <section class="resumo-pagamentos">
+            <div class="dashboard-titulo">
+                <h2>Dashboard Financeiro</h2>
+                <span id="dashboardPeriodo"></span>
+            </div>
 
-        <div class="coluna">
-          <h3>Débito</h3>
-          <div id="cards-debito" class="cards-coluna"></div>
-        </div>
+        </section>
 
-        <div class="coluna">
-          <h3>Crédito</h3>
-          <div id="cards-credito" class="cards-coluna"></div>
-        </div>
+        <!-- CARDS PRINCIPAIS -->
+        <section id="dashboardCards" class="dashboard-cards">
 
-        <div class="coluna">
-          <h3>Pix / TED (Entradas)</h3>
-          <div id="cards-pix-entrada" class="cards-coluna"></div>
-        </div>
+            <!-- preenchido pelo app.js -->
 
-        <div class="coluna">
-          <h3>Pix / TED (Saídas)</h3>
-          <div id="cards-pix-saida" class="cards-coluna"></div>
-        </div>
+        </section>
 
-      </section>
+        <!-- RESUMO POR PAGAMENTO (estrutura atual preservada) -->
+        <section class="resumo-pagamentos">
+
+            <div class="coluna">
+
+                <h3>Débito</h3>
+
+                <div id="cards-debito" class="cards-coluna"></div>
+
+            </div>
+
+            <div class="coluna">
+
+                <h3>Crédito</h3>
+
+                <div id="cards-credito" class="cards-coluna"></div>
+
+            </div>
+
+            <div class="coluna">
+
+                <h3>Pix / TED (Entradas)</h3>
+
+                <div id="cards-pix-entrada" class="cards-coluna"></div>
+
+            </div>
+
+            <div class="coluna">
+
+                <h3>Pix / TED (Saídas)</h3>
+
+                <div id="cards-pix-saida" class="cards-coluna"></div>
+
+            </div>
+
+        </section>
+
+        <!-- ÁREA PARA GRÁFICOS -->
+        <section id="dashboardGraficos" class="dashboard-graficos">
+
+        </section>
+
+        <!-- ÚLTIMOS LANÇAMENTOS -->
+        <section id="dashboardUltimos" class="dashboard-ultimos">
+
+        </section>
 
     </main>
 
