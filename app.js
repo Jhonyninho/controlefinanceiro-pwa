@@ -2792,25 +2792,41 @@ function calcularScoreFinanceiro(dados) {
 
 const EMOJIS_CATEGORIAS = {
 
-    "Alimentação":"🍔",
-    "Mercado":"🛒",
-    "Transporte":"🚗",
-    "Combustível":"⛽",
-    "Moradia":"🏠",
-    "Aluguel":"🏠",
-    "Energia":"⚡",
-    "Água":"💧",
-    "Internet":"🌐",
-    "Telefone":"📱",
-    "Farmácia":"💊",
-    "Saúde":"🩺",
-    "Educação":"🎓",
-    "Lazer":"🎮",
-    "Viagem":"✈️",
-    "Investimentos":"📈",
-    "Salário":"💵",
-    "Pix":"💸",
-    "Cartão":"💳"
+    "Alimentação": "🍔",
+    "Mercado": "🛒",
+
+    "Transporte": "🚗",
+    "Combustível": "⛽",
+    "Veículo": "🚘",
+
+    "Moradia": "🏠",
+    "Aluguel": "🏠",
+    "Energia": "⚡",
+    "Água": "💧",
+
+    "Comunicação": "📡",
+    "Internet": "🌐",
+    "Telefone": "📱",
+
+    "Farmácia": "💊",
+    "Saúde": "🩺",
+
+    "Educação": "🎓",
+
+    "Lazer": "🎮",
+    "Viagem": "✈️",
+
+    "Despesas Pessoais": "🧴",
+
+    "Tarifas e Impostos": "🧾",
+
+    "Investimentos": "📈",
+    "Salário": "💵",
+
+    "Pix": "💸",
+    "Cartão": "💳",
+
+    "Outros": "📦"
 
 };
 
