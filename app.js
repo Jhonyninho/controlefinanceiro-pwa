@@ -2796,21 +2796,35 @@ const EMOJIS_CATEGORIAS = {
     "Mercado":"🛒",
     "Transporte":"🚗",
     "Combustível":"⛽",
+
     "Moradia":"🏠",
     "Aluguel":"🏠",
+
+    "Saúde":"🩺",
+    "Farmácia":"💊",
+
+    "Educação":"🎓",
+    "Lazer":"🎮",
+    "Viagem":"✈️",
+
     "Energia":"⚡",
     "Água":"💧",
     "Internet":"🌐",
     "Telefone":"📱",
-    "Farmácia":"💊",
-    "Saúde":"🩺",
-    "Educação":"🎓",
-    "Lazer":"🎮",
-    "Viagem":"✈️",
+    "Comunicação":"📡",
+
+    "Veículo":"🚙",
+    "Veiculo":"🚙",
+
+    "Despesas Pessoais":"🧍",
+    "Tarifas e Impostos":"📄",
+
     "Investimentos":"📈",
     "Salário":"💵",
     "Pix":"💸",
-    "Cartão":"💳"
+    "Cartão":"💳",
+
+    "Outros":"📦"
 
 };
 
