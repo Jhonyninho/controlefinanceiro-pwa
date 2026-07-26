@@ -2269,10 +2269,102 @@
 function calcularInteligenciaFinanceira() {
 
     // ================================================
-    // RESUMO GERAL (FONTE OFICIAL DOS DADOS)
+    // FILTROS
+    // ================================================
+    const ano =
+        Number(
+            document.getElementById("ifAno")?.value ||
+            new Date().getFullYear()
+        );
+
+    const mesSelecionado =
+        document.getElementById("ifMes")?.value
+    
+
+    // ================================================
+    // LANÇAMENTOS FILTRADOS
     // ================================================
 
-    const resumo = calcularResumoGeral();
+    const lancamentosPeriodo = lancamentos.filter(l => {
+
+        const data = new Date(formatarDataISO(l[1]));
+
+        if (data.getFullYear() !== ano)
+            return false;
+
+        if (
+            mesSelecionado !== "" &&
+            data.getMonth() !== Number(mesSelecionado)
+        )
+            return false;
+
+        return true;
+
+    });
+
+    // ================================================
+    // RESUMO DO PERÍODO
+    // ================================================
+
+    const entradas = lancamentosPeriodo
+        .filter(l => String(l[2]).toUpperCase() === "ENTRADA")
+        .reduce((s, l) => s + parseValorBR(l[7]), 0);
+
+    const saidas = lancamentosPeriodo
+        .filter(l => String(l[2]).toUpperCase() === "SAIDA")
+        .reduce((s, l) => s + parseValorBR(l[7]), 0);
+
+    const saldoAtual = entradas - saidas;
+
+    // ================================================
+    // LANÇAMENTOS FUTUROS DO PERÍODO
+    // ================================================
+
+    const futurosPeriodo = obterLancamentosProjetados().filter(l => {
+
+        const data = new Date(formatarDataISO(l[1]));
+
+        if (data.getFullYear() !== ano)
+            return false;
+
+        if (
+            mesSelecionado !== "" &&
+            data.getMonth() !== Number(mesSelecionado)
+        )
+            return false;
+
+        return true;
+
+    });
+
+    const entradasFuturas = futurosPeriodo
+        .filter(l => String(l[2]).toUpperCase() === "ENTRADA")
+        .reduce((s, l) => s + parseValorBR(l[7]), 0);
+
+    const saidasFuturas = futurosPeriodo
+        .filter(l => String(l[2]).toUpperCase() === "SAIDA")
+        .reduce((s, l) => s + parseValorBR(l[7]), 0);
+
+    const saldoProjetado =
+        saldoAtual +
+        entradasFuturas -
+        saidasFuturas;
+
+    const resumo = {
+
+        entradas,
+
+        saidas,
+
+        entradasFuturas,
+
+        saidasFuturas,
+
+        saldoAtual,
+
+        saldoProjetado
+
+    };
 
     const dados = {
 
@@ -2319,21 +2411,6 @@ function calcularInteligenciaFinanceira() {
     }
 
     // ================================================
-    // FILTROS
-    // ================================================
-
-    const ano =
-        Number(
-            document.getElementById("ifAno")?.value ||
-            new Date().getFullYear()
-        );
-
-    const mes =
-        document.getElementById("ifMes")?.value;
-
-    const categorias = {};
-
-    // ================================================
     // ANÁLISE DAS DESPESAS
     // ================================================
 
@@ -2345,8 +2422,8 @@ function calcularInteligenciaFinanceira() {
             return;
 
         if (
-            mes !== "" &&
-            data.getMonth() !== Number(mes)
+            mesSelecionado !== "" &&
+            data.getMonth() !== Number(mesSelecionado)
         )
             return;
 
@@ -2456,6 +2533,20 @@ function renderInteligenciaFinanceira() {
 
     saldoAtual.textContent =
         formatMoney(dados.saldoAtual);
+
+    if (aReceber) {
+
+        aReceber.textContent =
+            formatMoney(dados.aReceber);
+
+    }
+
+    if (aPagar) {
+
+        aPagar.textContent =
+            formatMoney(dados.aPagar);
+
+    }    
 
     comprometimento.textContent =
         `${dados.comprometimento.toFixed(1)}%`;
