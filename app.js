@@ -2262,109 +2262,11 @@
       });
   }
 
-// ======================================================
+  // ======================================================
 // INTELIGÊNCIA FINANCEIRA
 // ======================================================
 
 function calcularInteligenciaFinanceira() {
-
-    // ================================================
-    // FILTROS
-    // ================================================
-    const ano =
-        Number(
-            document.getElementById("ifAno")?.value ||
-            new Date().getFullYear()
-        );
-
-    const mesSelecionado =
-        document.getElementById("ifMes")?.value
-    
-
-    // ================================================
-    // LANÇAMENTOS FILTRADOS
-    // ================================================
-
-    const lancamentosPeriodo = lancamentos.filter(l => {
-
-        const data = new Date(formatarDataISO(l[1]));
-
-        if (data.getFullYear() !== ano)
-            return false;
-
-        if (
-            mesSelecionado !== "" &&
-            data.getMonth() !== Number(mesSelecionado)
-        )
-            return false;
-
-        return true;
-
-    });
-
-    // ================================================
-    // RESUMO DO PERÍODO
-    // ================================================
-
-    const entradas = lancamentosPeriodo
-        .filter(l => String(l[2]).toUpperCase() === "ENTRADA")
-        .reduce((s, l) => s + parseValorBR(l[7]), 0);
-
-    const saidas = lancamentosPeriodo
-        .filter(l => String(l[2]).toUpperCase() === "SAIDA")
-        .reduce((s, l) => s + parseValorBR(l[7]), 0);
-
-    const saldoAtual = entradas - saidas;
-
-    // ================================================
-    // LANÇAMENTOS FUTUROS DO PERÍODO
-    // ================================================
-
-    const futurosPeriodo = obterLancamentosProjetados().filter(l => {
-
-        const data = new Date(formatarDataISO(l[1]));
-
-        if (data.getFullYear() !== ano)
-            return false;
-
-        if (
-            mesSelecionado !== "" &&
-            data.getMonth() !== Number(mesSelecionado)
-        )
-            return false;
-
-        return true;
-
-    });
-
-    const entradasFuturas = futurosPeriodo
-        .filter(l => String(l[2]).toUpperCase() === "ENTRADA")
-        .reduce((s, l) => s + parseValorBR(l[7]), 0);
-
-    const saidasFuturas = futurosPeriodo
-        .filter(l => String(l[2]).toUpperCase() === "SAIDA")
-        .reduce((s, l) => s + parseValorBR(l[7]), 0);
-
-    const saldoProjetado =
-        saldoAtual +
-        entradasFuturas -
-        saidasFuturas;
-
-    const resumo = {
-
-        entradas,
-
-        saidas,
-
-        entradasFuturas,
-
-        saidasFuturas,
-
-        saldoAtual,
-
-        saldoProjetado
-
-    };
 
     const dados = {
 
@@ -2376,128 +2278,133 @@ function calcularInteligenciaFinanceira() {
         categoriaMaior: "--",
         categoriaMenor: "--",
 
-        totalPago: resumo.saidas,
-        totalRecebido: resumo.entradas,
+        totalPago: 0,
+        totalRecebido: 0,
 
-        aPagar: resumo.saidasFuturas,
-        aReceber: resumo.entradasFuturas,
-
-        saldoAtual: resumo.saldoAtual,
-        saldoProjetado: resumo.saldoProjetado,
-
-        receitaPrevista:
-            resumo.entradas +
-            resumo.entradasFuturas,
-
-        despesaPrevista:
-            resumo.saidas +
-            resumo.saidasFuturas,
+        mediaDiaria: 0,
 
         comprometimento: 0,
+
+        previsaoMes: 0,
 
         resumo: ""
 
     };
 
-    // ================================================
-    // COMPROMETIMENTO
-    // ================================================
+    if (!Array.isArray(lancamentos) || !lancamentos.length) {
 
-    if (dados.receitaPrevista > 0) {
+        dados.resumo = "Nenhum lançamento encontrado.";
 
-        dados.comprometimento =
-            (dados.despesaPrevista / dados.receitaPrevista) * 100;
+        return dados;
 
     }
 
-    // ================================================
-    // ANÁLISE DAS DESPESAS
-    // ================================================
+    const selAno = document.getElementById("ifAno");
+    const selMes = document.getElementById("ifMes");
+
+    const anoSelecionado = Number(selAno?.value || new Date().getFullYear());
+    const mesSelecionado = selMes?.value;
+
+    const categorias = {};
+    const diasComMovimento = new Set();
 
     lancamentos.forEach(l => {
 
         const data = new Date(formatarDataISO(l[1]));
 
-        if (data.getFullYear() !== ano)
-            return;
+        if (data.getFullYear() !== anoSelecionado) return;
 
         if (
             mesSelecionado !== "" &&
             data.getMonth() !== Number(mesSelecionado)
-        )
-            return;
+        ) return;
 
-        if (String(l[2]).toUpperCase() !== "SAIDA")
-            return;
-
+        const tipo = String(l[2]).toUpperCase();
         const categoria = l[3];
         const valor = parseValorBR(l[7]);
 
-        categorias[categoria] =
-            (categorias[categoria] || 0) + valor;
+        diasComMovimento.add(data.getDate());
 
-        if (
-            !dados.maiorGasto ||
-            valor > dados.maiorGasto.valor
-        ) {
+        if (tipo === "SAIDA") {
 
-            dados.maiorGasto = {
-                categoria,
-                valor
-            };
+            dados.totalPago += valor;
+
+            categorias[categoria] =
+                (categorias[categoria] || 0) + valor;
+
+            if (!dados.maiorGasto || valor > dados.maiorGasto.valor) {
+
+                dados.maiorGasto = {
+                    categoria,
+                    valor
+                };
+
+            }
+
+            if (!dados.menorGasto || valor < dados.menorGasto.valor) {
+
+                dados.menorGasto = {
+                    categoria,
+                    valor
+                };
+
+            }
 
         }
 
-        if (
-            !dados.menorGasto ||
-            valor < dados.menorGasto.valor
-        ) {
+        if (tipo === "ENTRADA") {
 
-            dados.menorGasto = {
-                categoria,
-                valor
-            };
+            dados.totalRecebido += valor;
 
         }
 
     });
 
-    dados.categorias = categorias;
+    const listaCategorias = Object.entries(categorias);
 
-    const lista = Object.entries(categorias)
-        .sort((a, b) => b[1] - a[1]);
+    if (listaCategorias.length) {
 
-    if (lista.length) {
+        listaCategorias.sort((a,b)=>b[1]-a[1]);
 
-        dados.categoriaMaior = lista[0][0];
-        dados.categoriaMenor = lista[lista.length - 1][0];
+        dados.categoriaMaior = listaCategorias[0][0];
+
+        dados.categoriaMenor = listaCategorias[listaCategorias.length-1][0];
 
     }
 
-    // ================================================
-    // TEXTO DA IA
-    // ================================================
+    const qtdDias = diasComMovimento.size || 1;
 
-    dados.resumo = `
-Neste período foram recebidos ${formatMoney(dados.totalRecebido)}
-e pagos ${formatMoney(dados.totalPago)}.
+    dados.mediaDiaria = dados.totalPago / qtdDias;
 
-Seu saldo acumulado é de
-${formatMoney(dados.saldoAtual)}.
+    if (mesSelecionado !== "") {
 
-Ainda existem
-${formatMoney(dados.aReceber)}
-a receber e
-${formatMoney(dados.aPagar)}
-a pagar.
+        const diasNoMes = new Date(
+            anoSelecionado,
+            Number(mesSelecionado)+1,
+            0
+        ).getDate();
 
-Mantendo os lançamentos cadastrados,
-o saldo previsto será de
-${formatMoney(dados.saldoProjetado)}.
+        dados.previsaoMes =
+            dados.mediaDiaria * diasNoMes;
 
-O comprometimento financeiro previsto
-é de ${dados.comprometimento.toFixed(1)}%.
-`;
+    } else {
+
+        dados.previsaoMes = dados.totalPago;
+
+    }
+
+    if (dados.totalRecebido > 0) {
+
+        dados.comprometimento =
+            (dados.totalPago / dados.totalRecebido) * 100;
+
+    }
+
+    dados.resumo =
+        `Foram analisados ${diasComMovimento.size} dias com movimentações. O total de despesas foi ${formatMoney(dados.totalPago)} e o total de receitas foi ${formatMoney(dados.totalRecebido)}.`;
+
+    // IMPORTANTE
+    dados.categorias = categorias;
 
     return dados;
 
@@ -2509,74 +2416,53 @@ O comprometimento financeiro previsto
 
 function renderInteligenciaFinanceira() {
 
-    const totalPago = document.getElementById("ifTotalPago");
-    const totalRecebido = document.getElementById("ifTotalRecebido");
-    const saldoAtual = document.getElementById("ifMediaDiaria");
-    const aReceber = document.getElementById("ifAReceber");
-    const aPagar = document.getElementById("ifAPagar");
-    const comprometimento = document.getElementById("ifComprometimento");
-    const saldoProjetado = document.getElementById("ifPrevisao");
-    const resumo = document.getElementById("ifResumoIA");
-
     const dados = calcularInteligenciaFinanceira();
     const score = calcularScoreFinanceiro(dados);
 
-    // ==================================================
-    // INDICADORES
-    // ==================================================
+    const maior = document.getElementById("ifMaiorGasto");
+    const menor = document.getElementById("ifMenorGasto");
+    const catMaior = document.getElementById("ifCategoriaMaior");
+    const catMenor = document.getElementById("ifCategoriaMenor");
+    const pago = document.getElementById("ifTotalPago");
+    const recebido = document.getElementById("ifTotalRecebido");
+    const media = document.getElementById("ifMediaDiaria");
+    const comprometimento = document.getElementById("ifComprometimento");
+    const previsao = document.getElementById("ifPrevisao");
+    const resumo = document.getElementById("ifResumoIA");
 
-    totalPago.textContent =
-        formatMoney(dados.totalPago);
+    if (!maior) return;
 
-    totalRecebido.textContent =
-        formatMoney(dados.totalRecebido);
+    maior.textContent = dados.maiorGasto
+        ? `${dados.maiorGasto.categoria} - ${formatMoney(dados.maiorGasto.valor)}`
+        : "--";
 
-    saldoAtual.textContent =
-        formatMoney(dados.saldoAtual);
+    menor.textContent = dados.menorGasto
+        ? `${dados.menorGasto.categoria} - ${formatMoney(dados.menorGasto.valor)}`
+        : "--";
 
-    if (aReceber) {
+    catMaior.textContent = dados.categoriaMaior;
+    catMenor.textContent = dados.categoriaMenor;
 
-        aReceber.textContent =
-            formatMoney(dados.aReceber);
-
-    }
-
-    if (aPagar) {
-
-        aPagar.textContent =
-            formatMoney(dados.aPagar);
-
-    }    
+    pago.textContent = formatMoney(dados.totalPago);
+    recebido.textContent = formatMoney(dados.totalRecebido);
+    media.textContent = formatMoney(dados.mediaDiaria);
 
     comprometimento.textContent =
-        `${dados.comprometimento.toFixed(1)}%`;
+        dados.comprometimento.toFixed(1) + "%";
 
-    saldoProjetado.textContent =
-        formatMoney(dados.saldoProjetado);
-
-    // ==================================================
-    // SCORE + IA
-    // ==================================================
+    previsao.textContent =
+        formatMoney(dados.previsaoMes);
 
     if (resumo) {
 
         resumo.innerHTML = `
-
             <strong>Score Financeiro:</strong>
-
             ${score.score}/100 - ${score.classificacao}
-
             <br><br>
-
-            ${dados.resumo.replace(/\n/g, "<br>")}
-
+            ${dados.resumo}
         `;
 
     }
-
-    // ==================================================
-    // PAINÉIS AUXILIARES
-    // ==================================================
 
     atualizarDistribuicaoDespesas(dados);
 
@@ -2593,24 +2479,19 @@ function renderInteligenciaFinanceira() {
 function inicializarFiltrosIF() {
 
     const selAno = document.getElementById("ifAno");
-    const selMes = document.getElementById("ifMes");
     const btn = document.getElementById("btnAtualizarIF");
 
-    if (!selAno || !selMes || !btn) return;
-
-    // -------------------------------
-    // ANOS
-    // -------------------------------
+    if (!selAno || !btn) return;
 
     if (selAno.options.length === 0) {
 
         const anoAtual = new Date().getFullYear();
 
-        for (let ano = anoAtual - 5; ano <= anoAtual + 1; ano++) {
+        for (let a = anoAtual - 5; a <= anoAtual + 1; a++) {
 
             selAno.innerHTML += `
-                <option value="${ano}">
-                    ${ano}
+                <option value="${a}">
+                    ${a}
                 </option>
             `;
 
@@ -2620,54 +2501,11 @@ function inicializarFiltrosIF() {
 
     }
 
-    // -------------------------------
-    // MESES
-    // -------------------------------
+    btn.onclick = () => {
 
-    if (selMes.options.length === 0) {
+        renderInteligenciaFinanceira();
 
-        selMes.innerHTML = `
-            <option value="">Todo o ano</option>
-        `;
-
-        const meses = [
-
-            "Janeiro",
-            "Fevereiro",
-            "Março",
-            "Abril",
-            "Maio",
-            "Junho",
-            "Julho",
-            "Agosto",
-            "Setembro",
-            "Outubro",
-            "Novembro",
-            "Dezembro"
-
-        ];
-
-        meses.forEach((nome, indice) => {
-
-            selMes.innerHTML += `
-                <option value="${indice}">
-                    ${nome}
-                </option>
-            `;
-
-        });
-
-    }
-
-    // -------------------------------
-    // EVENTOS
-    // -------------------------------
-
-    btn.onclick = renderInteligenciaFinanceira;
-
-    selAno.onchange = renderInteligenciaFinanceira;
-
-    selMes.onchange = renderInteligenciaFinanceira;
+    };
 
 }
 
@@ -2675,131 +2513,70 @@ function inicializarFiltrosIF() {
 // INSIGHTS FINANCEIROS
 // ======================================================
 
-function atualizarInsightsFinanceiros(dados) {
+function atualizarInsightsFinanceiros(dados){
 
     const div = document.getElementById("ifInsights");
 
-    if (!div) return;
+    if(!div) return;
 
     div.innerHTML = "";
 
     const insights = [];
 
-    // ==========================================
-    // COMPROMETIMENTO
-    // ==========================================
-
-    if (dados.comprometimento >= 90) {
+    if(dados.comprometimento >= 90){
 
         insights.push(
-            "⚠️ Seu comprometimento financeiro previsto ultrapassa 90%. É recomendado reduzir despesas."
+            "⚠️ Suas despesas representam mais de 90% da sua renda."
         );
 
-    } else if (dados.comprometimento >= 70) {
+    }else if(dados.comprometimento >= 70){
 
         insights.push(
-            "⚠️ Mais de 70% da sua receita prevista já está comprometida."
+            "⚠️ Mais de 70% da sua renda já está comprometida."
         );
 
-    } else {
+    }else{
 
         insights.push(
-            "✅ O comprometimento financeiro previsto está em uma faixa considerada saudável."
+            "✅ Seu comprometimento financeiro está dentro de uma faixa saudável."
         );
 
     }
 
-    // ==========================================
-    // SALDO PROJETADO
-    // ==========================================
-
-    if (dados.saldoProjetado < 0) {
+    if(dados.categoriaMaior !== "--"){
 
         insights.push(
-            `🚨 O saldo projetado é negativo (${formatMoney(dados.saldoProjetado)}). Revise suas despesas futuras.`
-        );
-
-    } else {
-
-        insights.push(
-            `💰 O saldo projetado para o período é ${formatMoney(dados.saldoProjetado)}.`
+            `📌 A categoria que mais consumiu recursos foi ${dados.categoriaMaior}.`
         );
 
     }
 
-    // ==========================================
-    // RECEBER
-    // ==========================================
-
-    if (dados.aReceber > 0) {
+    if(dados.maiorGasto){
 
         insights.push(
-            `📈 Existem ${formatMoney(dados.aReceber)} previstos para recebimento.`
+            `💸 O maior gasto individual foi de ${formatMoney(dados.maiorGasto.valor)}.`
         );
 
     }
 
-    // ==========================================
-    // PAGAR
-    // ==========================================
-
-    if (dados.aPagar > 0) {
+    if(dados.mediaDiaria > 0){
 
         insights.push(
-            `📉 Existem ${formatMoney(dados.aPagar)} em pagamentos futuros cadastrados.`
+            `📅 Sua média diária de despesas é ${formatMoney(dados.mediaDiaria)}.`
         );
 
     }
 
-    // ==========================================
-    // MAIOR CATEGORIA
-    // ==========================================
-
-    if (dados.categoriaMaior !== "--") {
-
-        insights.push(
-            `📌 A categoria com maior consumo financeiro foi "${dados.categoriaMaior}".`
-        );
-
-    }
-
-    // ==========================================
-    // MAIOR GASTO
-    // ==========================================
-
-    if (dados.maiorGasto) {
-
-        insights.push(
-            `💸 O maior gasto individual registrado foi de ${formatMoney(dados.maiorGasto.valor)} na categoria "${dados.maiorGasto.categoria}".`
-        );
-
-    }
-
-    // ==========================================
-    // SITUAÇÃO GERAL
-    // ==========================================
-
-    if (
-        dados.saldoProjetado > 0 &&
-        dados.comprometimento < 70
-    ) {
-
-        insights.push(
-            "✅ O cenário financeiro indica tendência positiva para o período."
-        );
-
-    }
-
-    // ==========================================
-    // RENDER
-    // ==========================================
-
-    insights.forEach(texto => {
+    insights.forEach(texto=>{
 
         div.innerHTML += `
-            <div class="if-insight-item">
-                ${texto}
-            </div>
+
+        <div class="if-insight-item">
+
+            ${texto}
+
+        </div>
+
         `;
 
     });
@@ -2818,11 +2595,11 @@ function atualizarComparativoFinanceiro() {
 
     div.innerHTML = "";
 
-    const ano = Number(document.getElementById("ifAno").value);
+    const selAno = Number(document.getElementById("ifAno").value);
 
-    const mesSelecionado = document.getElementById("ifMes").value;
+    const selMes = document.getElementById("ifMes").value;
 
-    if (mesSelecionado === "") {
+    if (selMes === "") {
 
         div.innerHTML = `
             <div class="if-vazio">
@@ -2834,9 +2611,9 @@ function atualizarComparativoFinanceiro() {
 
     }
 
-    const mes = Number(mesSelecionado);
+    const mesAtual = Number(selMes);
 
-    if (mes === 0) {
+    if (mesAtual === 0) {
 
         div.innerHTML = `
             <div class="if-vazio">
@@ -2853,26 +2630,26 @@ function atualizarComparativoFinanceiro() {
 
     lancamentos.forEach(l => {
 
-        if (String(l[2]).toUpperCase() !== "SAIDA")
-            return;
-
         const data = new Date(formatarDataISO(l[1]));
 
-        if (data.getFullYear() !== ano)
-            return;
+        if (data.getFullYear() !== selAno) return;
+
+        const tipo = String(l[2]).toUpperCase();
+
+        if (tipo !== "SAIDA") return;
 
         const categoria = l[3];
 
         const valor = parseValorBR(l[7]);
 
-        if (data.getMonth() === mes) {
+        if (data.getMonth() === mesAtual) {
 
             atual[categoria] =
                 (atual[categoria] || 0) + valor;
 
         }
 
-        if (data.getMonth() === mes - 1) {
+        if (data.getMonth() === mesAtual - 1) {
 
             anterior[categoria] =
                 (anterior[categoria] || 0) + valor;
@@ -2881,70 +2658,62 @@ function atualizarComparativoFinanceiro() {
 
     });
 
-    const listaCategorias = new Set([
-
+    const categorias = new Set([
         ...Object.keys(atual),
-
         ...Object.keys(anterior)
-
     ]);
 
-    if (!listaCategorias.size) {
+    categorias.forEach(cat => {
 
-        div.innerHTML = `
-            <div class="if-vazio">
-                Nenhum dado encontrado.
-            </div>
-        `;
+        const valorAtual = atual[cat] || 0;
 
-        return;
+        const valorAnterior = anterior[cat] || 0;
 
-    }
-
-    listaCategorias.forEach(categoria => {
-
-        const valorAtual = atual[categoria] || 0;
-        const valorAnterior = anterior[categoria] || 0;
-
-        let texto = "";
+        let texto;
 
         if (valorAnterior === 0 && valorAtual > 0) {
 
-            texto =
-                `🆕 ${categoria}: nova despesa (${formatMoney(valorAtual)})`;
+            texto = `🆕 ${cat}: nova despesa (${formatMoney(valorAtual)})`;
 
-        } else if (valorAtual === 0 && valorAnterior > 0) {
+        }
 
-            texto =
-                `✅ ${categoria}: sem despesas neste mês.`;
-
-        } else if (valorAtual > valorAnterior) {
+        else if (valorAtual > valorAnterior) {
 
             const perc =
-                ((valorAtual - valorAnterior) / valorAnterior) * 100;
+                ((valorAtual - valorAnterior) /
+                valorAnterior) * 100;
 
             texto =
-                `🔺 ${categoria}: aumento de ${perc.toFixed(1)}%.`;
+                `🔺 ${cat}: +${perc.toFixed(1)}%`;
 
-        } else if (valorAtual < valorAnterior) {
+        }
+
+        else if (valorAtual < valorAnterior) {
 
             const perc =
-                ((valorAnterior - valorAtual) / valorAnterior) * 100;
+                ((valorAnterior - valorAtual) /
+                valorAnterior) * 100;
 
             texto =
-                `🔻 ${categoria}: redução de ${perc.toFixed(1)}%.`;
+                `🔻 ${cat}: -${perc.toFixed(1)}%`;
 
-        } else {
+        }
+
+        else {
 
             texto =
-                `➡️ ${categoria}: permaneceu estável.`;
+                `➡️ ${cat}: estável`;
 
         }
 
         div.innerHTML += `
+
             <div class="if-insight-item">
+
                 ${texto}
+
             </div>
+
         `;
 
     });
@@ -2973,7 +2742,7 @@ function calcularScoreFinanceiro(dados) {
 
     }
 
-    if (dados.saldoProjetado < 0) {
+    if (dados.previsaoMes > dados.totalRecebido) {
 
         score -= 20;
 
@@ -2985,12 +2754,9 @@ function calcularScoreFinanceiro(dados) {
 
     }
 
-    score = Math.max(
-        0,
-        Math.min(100, Math.round(score))
-    );
+    score = Math.max(0, Math.min(100, Math.round(score)));
 
-    let classificacao;
+    let classificacao = "";
 
     if (score >= 90) {
 
@@ -3030,35 +2796,21 @@ const EMOJIS_CATEGORIAS = {
     "Mercado":"🛒",
     "Transporte":"🚗",
     "Combustível":"⛽",
-
     "Moradia":"🏠",
     "Aluguel":"🏠",
-
-    "Saúde":"🩺",
-    "Farmácia":"💊",
-
-    "Educação":"🎓",
-    "Lazer":"🎮",
-    "Viagem":"✈️",
-
     "Energia":"⚡",
     "Água":"💧",
     "Internet":"🌐",
     "Telefone":"📱",
-    "Comunicação":"📡",
-
-    "Veículo":"🚙",
-    "Veiculo":"🚙",
-
-    "Despesas Pessoais":"🧍",
-    "Tarifas e Impostos":"📄",
-
+    "Farmácia":"💊",
+    "Saúde":"🩺",
+    "Educação":"🎓",
+    "Lazer":"🎮",
+    "Viagem":"✈️",
     "Investimentos":"📈",
     "Salário":"💵",
     "Pix":"💸",
-    "Cartão":"💳",
-
-    "Outros":"📦"
+    "Cartão":"💳"
 
 };
 
@@ -3072,22 +2824,20 @@ function obterEmojiCategoria(nome){
 // DISTRIBUIÇÃO INTELIGENTE DAS DESPESAS
 // ======================================================
 
-function atualizarDistribuicaoDespesas(dados) {
+function atualizarDistribuicaoDespesas(dados){
 
     const painel = document.getElementById("ifDistribuicaoCategorias");
 
-    if (!painel) return;
-
-    painel.innerHTML = "";
+    if(!painel) return;
 
     const categorias = Object.entries(dados.categorias || {})
-        .sort((a, b) => b[1] - a[1]);
+        .sort((a,b)=>b[1]-a[1]);
 
-    if (!categorias.length) {
+    if(!categorias.length){
 
         painel.innerHTML = `
             <div class="if-vazio">
-                Nenhuma despesa encontrada para o período selecionado.
+                Nenhuma informação disponível.
             </div>
         `;
 
@@ -3095,71 +2845,81 @@ function atualizarDistribuicaoDespesas(dados) {
 
     }
 
-    const total = categorias.reduce((s, [, valor]) => s + valor, 0);
+    const total = categorias.reduce((s,c)=>s+c[1],0);
 
-    let html = `<div class="if-distribuicao-lista">`;
+    let html = '<div class="if-distribuicao-lista">';
 
-    categorias.forEach(([categoria, valor]) => {
+    categorias.forEach(([categoria,valor])=>{
 
-        const percentual = total > 0
-            ? (valor / total) * 100
+        const percentual = total
+            ? (valor/total)*100
             : 0;
 
-        let classe = "baixo";
+        let cor="#22c55e";
 
-        if (percentual >= 35) {
+        if(percentual>=35){
 
-            classe = "alto";
+            cor="#ef4444";
 
-        } else if (percentual >= 20) {
+        }else if(percentual>=20){
 
-            classe = "medio";
+            cor="#f59e0b";
+
+        }else if(percentual>=10){
+
+            cor="#3b82f6";
 
         }
 
         html += `
 
-            <div
-                class="if-item ${classe}"
-                onclick="abrirDetalheCategoria('${categoria.replace(/'/g, "\\'")}')"
-            >
+        <div class="if-item">
 
-                <div class="if-item-topo">
+            <div class="if-item-topo">
 
-                    <div class="if-item-esquerda">
+                <div class="if-item-esquerda">
 
-                        <span class="if-emoji">
-                            ${obterEmojiCategoria(categoria)}
-                        </span>
+                    <span class="if-emoji">
 
-                        <span>
-                            ${categoria}
-                        </span>
+                        ${obterEmojiCategoria(categoria)}
 
-                    </div>
+                    </span>
 
-                    <div class="if-valor">
-                        ${formatMoney(valor)}
-                    </div>
+                    <span>
+
+                        ${categoria}
+
+                    </span>
 
                 </div>
 
-                <div class="if-barra">
+                <div class="if-valor">
 
-                    <div
-                        class="if-preenchimento"
-                        style="width:${percentual.toFixed(1)}%;"
-                    ></div>
-
-                </div>
-
-                <div class="if-percentual">
-
-                    ${percentual.toFixed(1)}%
+                    ${formatMoney(valor)}
 
                 </div>
 
             </div>
+
+            <div class="if-barra">
+
+                <div
+                    class="if-preenchimento"
+                    style="
+                        width:${percentual.toFixed(1)}%;
+                        background:${cor};
+                    ">
+                </div>
+
+            </div>
+
+            <div class="if-percentual">
+
+                ${percentual.toFixed(1)}%
+
+            </div>
+
+        </div>
 
         `;
 
@@ -3168,158 +2928,5 @@ function atualizarDistribuicaoDespesas(dados) {
     html += "</div>";
 
     painel.innerHTML = html;
-
-}
-
-// ======================================================
-// DETALHAMENTO DA CATEGORIA
-// ======================================================
-
-function abrirDetalheCategoria(categoria) {
-
-    const ano =
-        Number(document.getElementById("ifAno").value);
-
-    const mes =
-        document.getElementById("ifMes").value;
-
-    const registros = lancamentos
-        .filter(l => {
-
-            if (String(l[2]).toUpperCase() !== "SAIDA")
-                return false;
-
-            if (l[3] !== categoria)
-                return false;
-
-            const data = new Date(formatarDataISO(l[1]));
-
-            if (data.getFullYear() !== ano)
-                return false;
-
-            if (
-                mes !== "" &&
-                data.getMonth() !== Number(mes)
-            )
-                return false;
-
-            return true;
-
-        })
-        .sort(
-            (a, b) =>
-                new Date(formatarDataISO(b[1])) -
-                new Date(formatarDataISO(a[1]))
-        );
-
-    let total = 0;
-
-    registros.forEach(l => {
-
-        total += parseValorBR(l[7]);
-
-    });
-
-    let html = `
-
-    <div class="modal-edicao">
-
-        <div class="modal-overlay"
-             onclick="this.parentElement.remove()"></div>
-
-        <div class="modal-box">
-
-            <h3>
-
-                ${obterEmojiCategoria(categoria)}
-                ${categoria}
-
-            </h3>
-
-            <p>
-
-                <strong>Total:</strong>
-                ${formatMoney(total)}
-
-            </p>
-
-            <hr>
-
-    `;
-
-    if (!registros.length) {
-
-        html += `
-
-            <p>
-
-                Nenhum lançamento encontrado.
-
-            </p>
-
-        `;
-
-    } else {
-
-        registros.forEach(l => {
-
-            html += `
-
-                <div class="modal-item">
-
-                    <div>
-
-                        <strong>
-
-                            ${formatarDataBR(l[1])}
-
-                        </strong>
-
-                        <br>
-
-                        ${l[8] || "-"}
-
-                    </div>
-
-                    <strong>
-
-                        ${formatMoney(parseValorBR(l[7]))}
-
-                    </strong>
-
-                </div>
-
-            `;
-
-        });
-
-    }
-
-    html += `
-
-            <div class="modal-acoes">
-
-                <button
-                    onclick="this.closest('.modal-edicao').remove()">
-
-                    Fechar
-
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    `;
-
-    document.body.insertAdjacentHTML(
-
-        "beforeend",
-
-        html
-
-    );
 
 }
