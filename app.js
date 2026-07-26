@@ -221,6 +221,8 @@
 
     renderResumo();
 
+    renderDashboard();
+
     renderResumoGeral();
 
     renderLancamentosFuturos();
@@ -641,9 +643,96 @@
             )
           );
       });
+
+      // Atualiza Dashboard
+      if (document.getElementById('dashboardCards')) {
+          renderDashboard();
+      }
+            
       // Atualiza também o Resumo Geral
       if (document.getElementById('cards-resumo-geral')) {
           renderResumoGeral();
+      }
+
+  }
+
+  // ======================================================
+  // DASHBOARD PRINCIPAL
+  // ======================================================
+  function renderDashboard() {
+
+      const container = document.getElementById("dashboardCards");
+
+      if (!container) return;
+
+      const resumo = calcularResumoGeral();
+
+      container.innerHTML = "";
+
+      const cards = [
+
+          {
+              titulo: "Saldo Atual",
+              valor: resumo.saldoAtual,
+              classe: resumo.saldoAtual >= 0 ? "positivo" : "negativo"
+          },
+
+          {
+              titulo: "Receitas",
+              valor: resumo.entradas,
+              classe: "positivo"
+          },
+
+          {
+              titulo: "Despesas",
+              valor: resumo.saidas,
+              classe: "negativo"
+          },
+
+          {
+              titulo: "Saldo Projetado",
+              valor: resumo.saldoProjetado,
+              classe: resumo.saldoProjetado >= 0 ? "positivo" : "negativo"
+          }
+
+      ];
+
+      cards.forEach(card => {
+
+          const div = document.createElement("div");
+
+          div.className = `dashboard-card ${card.classe}`;
+
+          div.innerHTML = `
+
+              <div class="titulo">
+
+                  ${card.titulo}
+
+              </div>
+
+              <div class="valor">
+
+                  ${formatMoney(card.valor)}
+
+              </div>
+
+          `;
+
+          container.appendChild(div);
+
+      });
+
+      const periodo = document.getElementById("dashboardPeriodo");
+
+      if (periodo) {
+
+          periodo.textContent =
+              new Date().toLocaleDateString("pt-BR", {
+                  month: "long",
+                  year: "numeric"
+              });
+
       }
 
   }
